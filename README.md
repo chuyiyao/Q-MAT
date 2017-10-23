@@ -1,7 +1,7 @@
 # Q-MAT
 This is a C++ implementation of the 2016 siggraph paper *"Q-MAT: Computing Medial Axis Transform by Quadradic Error Minimization"*, aiming to simplify the medial axis tranform(MAT).
 
-#reference
+# reference
 
 The whole work is based on
 ```bib

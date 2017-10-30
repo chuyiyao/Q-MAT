@@ -4,6 +4,7 @@ This is a C++ implementation of the 2016 siggraph paper *"Q-MAT: Computing Media
 # Basic Programme Frame
 
 ![ProgramFrame](https://github.com/chuyiyao/Q-MAT/blob/master/Images/program_frame.png)
+![ProgramFrame_eng](https://github.com/chuyiyao/Q-MAT/blob/master/Images/frame_eng.png)
 
 # reference
 

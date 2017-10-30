@@ -3,8 +3,7 @@ This is a C++ implementation of the 2016 siggraph paper *"Q-MAT: Computing Media
 
 # Basic Programme Frame
 
-* Input: $M_s = \{\{m_i\},\{e_{ij}\} \}$
-
+![ProgramFrame](https://github.com/chuyiyao/Q-MAT/blob/master/Images/program_frame.png)
 
 # reference
 

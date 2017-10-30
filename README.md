@@ -1,23 +1,9 @@
-
-<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
-formula1: $$n==x$$
-
-formula2: $$n!=x$$
-
-formula3: (m==y)
-
-formula4: [m!=y]
-
-formula5: \(k==z\)
-
-formula6: \[k!=z\]
-
 # Q-MAT
 This is a C++ implementation of the 2016 siggraph paper *"Q-MAT: Computing Medial Axis Transform by Quadradic Error Minimization"*, aiming to simplify the medial axis tranform(MAT).
 
 # Basic Programme Frame
 
-*Input: $M_s = \{\{m_i\},\{e_{ij}\} \}$
+* Input: $M_s = \{\{m_i\},\{e_{ij}\} \}$
 
 
 # reference

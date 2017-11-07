@@ -15,15 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MAT.h">
+    <ClInclude Include="specializedMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="io.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MAT.cpp">
+    <ClCompile Include="TriMesh_Box.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Q_MATmain.cpp">
+    <ClCompile Include="varance.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="specializedMesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="io.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

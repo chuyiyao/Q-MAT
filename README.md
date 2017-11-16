@@ -1,14 +1,28 @@
 # Q-MAT（Unfinished）
 This is a C++ implementation of the 2016 siggraph paper *"Q-MAT: Computing Medial Axis Transform by Quadradic Error Minimization"*, aiming to simplify the medial axis tranform(MAT).
 
-# Basic Programme Frame
+# Basic Programming Frame
 
 ![ProgramFrame](https://github.com/chuyiyao/Q-MAT/blob/master/Images/program_frame.png)
 ![ProgramFrame_eng](https://github.com/chuyiyao/Q-MAT/blob/master/Images/frame_eng.png)
 
 At first I intend to use the library *CGAL* as the basic Mesh data structure for its *halfedge* structure, which speeds up the processing of find every adjacent face of a vertex. However, it turns out that this kind of structure only suits the surface mesh. The initial Medial Axis Transform is much more complex for there could be three or more triangle meshes share one edge.
 
-Finally, I decide to partly use the library [*trimesh*](http://gfx.cs.princeton.edu/proj/trimesh2/) as the base class, and I define a derived class called *MedialAxisTrans* adding new data structures to storing the edge and other edge's and vertex's properties.
+Finally, I decide to partly use the library [*trimesh*](http://gfx.cs.princeton.edu/proj/trimesh2/) as the base class, and I define a derived class called *MedialAxisTrans* adding new data structures to storing the edge and other edge's and vertex's properties, and ,of course, new connectivity must be added too.
+
+
+
+# Initial Medial Axis Transformation(the input)
+
+According to the article, we try to use the MAT based on .... and .... as out input.
+
+
+
+# Some outcome of the project
+
+
+
+
 
 
 

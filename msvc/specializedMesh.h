@@ -13,10 +13,6 @@ typedef int cone_id;
 class Edge{
 public:
 	vertex_id v[2];
-	Point c_g = Point(0.0f, 0.0f, 0.0f);
-	double r_g = 0;
-	double cost = 0;
-	double stability = 0;
 
 	Edge(){}
 	Edge(const int &v0, const int &v1)
@@ -36,6 +32,9 @@ public:
 	int &operator[] (int i) { return v[i]; }
 	const int &operator[] (int i) const { return v[i]; }
 };
+std::ostream &operator << (std::ostream &os, const Cone &c);
+
+std::ostream &operator << (std::ostream &os, const Face &f);
 
 class MedialAxisTrans:public TriMesh {
 private:
@@ -44,18 +43,26 @@ private:
 public:
 	struct VertexAttrib {
 		double radius;
-		std::vector<vec> n1;
-		std::vector<vec> n2;
 
-		VertexAttrib(): radius(0){}
+		VertexAttrib(): radius(1){}
 		VertexAttrib(double r) : radius(r) {}
 
+	};
+	struct EdgeAttrib {
+		Point c_g = Point(0.0f, 0.0f, 0.0f);
+		double r_g = 0;
+		double cost = 0;
+		double stability = 0;
 	};
 
 	std::vector<Edge> edges;
 	std::vector<Cone> cones;
 
-	std::vector<VertexAttrib> attributes;
+	std::vector<VertexAttrib> vAttributes;
+	std::vector<EdgeAttrib> eAttributes;
+
+	std::vector<vec> slabNormal1;
+	std::vector<vec> slabNormal2;
 	std::vector<std::vector<cone_id> > adjacentcones;
 
 	vertex_id add_vertex(Point p);
@@ -63,15 +70,28 @@ public:
 	face_id add_face(vertex_id i, vertex_id j, vertex_id k);
 	cone_id add_cone(vertex_id i, vertex_id j);
 	
-	void need_attributes();
+	void need_VertexAttributes();
 	double compStability(Edge &e);
 
 
 	MedialAxisTrans() : TriMesh() { };
 	//~MedialSurface();
+	void compSlabNormal(face_id fid);
+	void InitializeSlabNormal();
+
+	double compContractionTarget(edge_id e);
+
 	void Initialize();
+
+
+
+	//for rendering 
+	//void indexVBO_V_vN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);
+	//void indexVBO_V_fN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);
 
 };
 
+void solveNormalEq(const point &p1, const point &p2, const double &b1,
+	const double &b2, vec &n1, vec &n2);
 
-
+void swapComponent(point &p, int i, int j);

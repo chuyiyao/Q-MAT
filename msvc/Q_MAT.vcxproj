@@ -72,7 +72,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Clib\trimesh\msvc\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Clib\glfw-3.2.1.bin.WIN32\include;C:\Clib\trimesh\msvc\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Clib\glfw-3.2.1.bin.WIN32\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -95,7 +96,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\amd64\freeglut.lib;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\lib\amd64\freeglut_static.lib;C:\Clib\trimesh\lib.Win32\gluitdd.lib;C:\Clib\trimesh\lib.Win32\trimeshd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Clib\trimesh\lib.Win32\trimeshd.lib;opengl32.lib;glfw3.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -149,11 +151,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="controls.hpp" />
     <ClInclude Include="io.h" />
+    <ClInclude Include="matrix.h" />
+    <ClInclude Include="rendering.h" />
+    <ClInclude Include="shader.hpp" />
     <ClInclude Include="specializedMesh.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="controls.cpp" />
     <ClCompile Include="io.cpp" />
+    <ClCompile Include="matrix.cpp" />
+    <ClCompile Include="shader.cpp" />
     <ClCompile Include="specializedMesh.cpp" />
     <ClCompile Include="TriMesh_Box.cpp" />
     <ClCompile Include="varance.cpp" />

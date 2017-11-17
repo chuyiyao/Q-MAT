@@ -72,6 +72,7 @@ public:
   // create matrix with ones
   static Matrix ones(const int m,const int n);
 
+  static Matrix zeros(const int m, const int n);
   // create diagonal matrix with nx1 or 1xn matrix M as elements
   static Matrix diag(const Matrix &M);
   
@@ -90,6 +91,7 @@ public:
   Matrix  operator* (const double &s);  // multiply with scalar
   Matrix  operator/ (const Matrix &M); // divide elementwise by matrix (or vector)
   Matrix  operator/ (const double &s);  // divide by scalar
+  Matrix &operator += (Matrix &M);
   Matrix  operator- ();                // negative matrix
   Matrix  operator~ ();                // transpose
   double   l2norm ();                   // euclidean norm (vectors) / frobenius norm (matrices)

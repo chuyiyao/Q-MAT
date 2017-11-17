@@ -171,6 +171,13 @@ Matrix Matrix::ones (const int m,const int n) {
   return M;
 }
 
+Matrix Matrix::zeros(const int m, const int n) {
+	Matrix M(m, n);
+	for (int i = 0; i<m; i++)
+		for (int j = 0; j<n; j++)
+			M.val[i][j] = 0;
+	return M;
+}
 Matrix Matrix::diag (const Matrix &M) {
   if (M.m>1 && M.n==1) {
     Matrix D(M.m,M.m);
@@ -355,6 +362,21 @@ Matrix Matrix::operator~ () {
     for (int j=0; j<n; j++)
       C.val[j][i] = val[i][j];
   return C;
+}
+
+
+Matrix &Matrix::operator += (Matrix &M)
+{
+	if (M.m != m || M.n != n )
+	{
+		cerr << "ERROR:dimensionality error (" << A.m << "x" << A.n <<
+			") and (" << B.m << "x" << B.n << ")" << endl;
+		exit(0);
+	}
+	
+	for (int i = 0; i < m; i++)
+		v[i] += x[i];
+	return *this;
 }
 
 double Matrix::l2norm () {

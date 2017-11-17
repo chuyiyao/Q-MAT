@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <TriMesh.h>
+#include "matrix.h"
 
 typedef Vec<3, float> Point;
 typedef int vertex_id;
@@ -53,6 +54,7 @@ public:
 		double r_g = 0;
 		double cost = 0;
 		double stability = 0;
+		bool isManifold = true;
 	};
 
 	std::vector<Edge> edges;
@@ -79,11 +81,16 @@ public:
 	void compSlabNormal(face_id fid);
 	void InitializeSlabNormal();
 
+	void addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve);
+	void addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co);
+
+	double minimizeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c,EdgeAttrib &eAttri);
 	double compContractionTarget(edge_id e);
 
 	void Initialize();
 
-
+	void contractEdge(edge_id e);
+	
 
 	//for rendering 
 	//void indexVBO_V_vN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);

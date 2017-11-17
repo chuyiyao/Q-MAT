@@ -124,9 +124,47 @@ void MedialAxisTrans::InitializeSlabNormal() {
 
 }
 
-//double compContractionTarget(edge_id e) {
+void MedialAxisTrans::addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve) {
+	vec4 n1(slabNormal1[fa][0], slabNormal1[fa][1], slabNormal1[fa][2], 1.0f);
+	vec4 n2(slabNormal2[fa][0], slabNormal2[fa][1], slabNormal2[fa][2], 1.0f);
+	ICPL::Matrix tempA(4, 4);
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			tempA.val[i][j] = n1[i] * n1[j] + n2[i] * n2[j];
+			A.val[i][j] += tempA.val[i][j];
+		}
+	}
+	ICPL::Matrix m(4, 1);
+	for (int i = 0; i < 3; i++){
+		m.val[i][0] = vertices[ve][i];
+	}
+//	vec4 m(vertices[ve][0], vertices[ve][1], vertices[ve][2], vAttributes[ve].radius);
+	ICPL::Matrix tempb = tempA*m;
+	b += tempb*(-2);
+
+}
+
+//double MedialAxisTrans::compContractionTarget(edge_id e) {
+//	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
+//	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
+//	ICPL::Matrix c = ICPL::Matrix::zeros(4, 1);
+//	double cost = 0;
+//	std::vector<int> &neiF0 = adjacentfaces[edges[e].v[0]];
+//	for (int i = 0; i < neiF0.size(); i++)
+//		addSlabError(A, b, c, neiF0[i]);
+//	std::vector<int> &neiC0 = adjacentcones[edges[e].v[0]];
+//	for (int i = 0; i < neiC0.size(); i++)
+//		addConeError(A, b, c, neiC0[i]);
 //
+//	std::vector<int> &neiF1 = adjacentfaces[edges[e].v[1]];
+//	for (int i = 0; i < neiF1.size(); i++)
+//		addSlabError(A, b, c, neiF1[i]);
+//	std::vector<int> &neiC1 = adjacentcones[edges[e].v[1]];
+//	for (int i = 0; i < neiC1.size(); i++)
+//		addConeError(A, b, c, neiC1[i]);
 //
+//	cost = minimizeError(A, b, c, eAttributes[e]);
+//	return cost;
 //}
 
 

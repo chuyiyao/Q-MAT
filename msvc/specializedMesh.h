@@ -4,6 +4,8 @@
 #include <vector>
 #include <TriMesh.h>
 #include "matrix.h"
+#include <queue>
+#include <set>
 
 typedef Vec<3, float> Point;
 typedef int vertex_id;
@@ -44,7 +46,7 @@ private:
 public:
 	struct VertexAttrib {
 		double radius;
-
+		bool isvalid = true;
 		VertexAttrib(): radius(1){}
 		VertexAttrib(double r) : radius(r) {}
 
@@ -65,6 +67,27 @@ public:
 	std::vector<vec> slabNormal2;
 	std::vector<std::vector<cone_id> > adjacentcones;
 
+	struct EdgeIdCost {
+		edge_id id;
+		double mcost = 0;
+
+		EdgeIdCost() {}
+		EdgeIdCost(const edge_id &idx, double & c){
+			id = idx;	mcost = c;
+		}
+	};
+	struct cmp {
+		bool operator ()(const EdgeIdCost& a, const EdgeIdCost& b) {
+			return a.mcost > b.mcost;  // small heap
+		}
+	};
+	std::priority_queue<EdgeIdCost, std::vector<EdgeIdCost>, cmp> prioQue;
+	std::set<vertex_id> VerticesRemained;
+	std::set<face_id> FacesRemained;
+	std::set<cone_id> ConesRemained;
+//	std::set<edge_id> EdgesRemained;  //seem useless
+
+
 	vertex_id add_vertex(Point p);
 	edge_id add_edge(vertex_id i, vertex_id j);
 	face_id add_face(vertex_id i, vertex_id j, vertex_id k);
@@ -82,14 +105,12 @@ public:
 
 	void addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve);
 	void addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co, const vertex_id &ve);
+	double compContractionTarget(edge_id e);
 
-	double minimizeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c,EdgeAttrib &eAttri);
-	//double compContractionTarget(edge_id e);
-
-	void Initialize();
-
+	void Initialize(double k);
+	void InitializeEdgeQueue(double k);
 	//void contractEdge(edge_id e);
-	
+	int Contraction(int sigma);
 
 	//for rendering 
 	//void indexVBO_V_vN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);

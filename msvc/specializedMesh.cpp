@@ -109,7 +109,6 @@ void MedialAxisTrans::compSlabNormal(face_id fid) {
 		swapComponent(slabNormal2[fid], 0, 2);
 	}
 }
-
 void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL::Matrix & n2,
 	ICPL::Matrix & n1rot, ICPL::Matrix & n2rot) {
 	vec normal1, normal2;
@@ -153,8 +152,6 @@ void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL:
 	n2rot.val[0][0] = normal2rot[0]; n2rot.val[1][0] = normal2rot[1];
 	n2rot.val[2][0] = normal2rot[2]; n2rot.val[3][0] = 1.0;
 }
-
-
 void MedialAxisTrans::InitializeSlabNormal() {
 	if (faces.empty())
 		return;
@@ -188,52 +185,144 @@ void MedialAxisTrans::addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matri
 	b += tempb*(-2);
 	c += ~m * tempb;
 }
-
 void MedialAxisTrans::addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co, const vertex_id &ve){
 	ICPL::Matrix n1(4, 1), n2(4, 1), n1rot(4, 1), n2rot(4, 1);
 	compConeNormal(co, n1, n2, n1rot, n2rot);
+	ICPL::Matrix tempA(4, 4);
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			tempA.val[i][j] = n1.val[i][0] * n1.val[j][0] + n2.val[i][0] * n2.val[j][0];
+			A.val[i][j] += tempA.val[i][j];
+		}
+	}
+	ICPL::Matrix m(4, 1);
+	for (int i = 0; i < 3; i++) {
+		m.val[i][0] = vertices[ve][i];
+	}
+	m.val[3][0] = vAttributes[ve].radius;
+	ICPL::Matrix tempb = tempA*m;
+	b += tempb*(-2);
+	c += ~m * tempb;
 
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			tempA.val[i][j] = n1rot.val[i][0] * n1rot.val[j][0] + n2rot.val[i][0] * n2rot.val[j][0];
+			A.val[i][j] += tempA.val[i][j];
+		}
+	}
+	tempb = tempA*m;
+	b += tempb*(-2);
+	c += ~m * tempb;
 
 }
+double MedialAxisTrans::compContractionTarget(edge_id e) {
+	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
+	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
+	ICPL::Matrix c = ICPL::Matrix::zeros(1, 1);
+	double cost = 0;
+	std::vector<int> &neiF0 = adjacentfaces[edges[e].v[0]];
+	for (int i = 0; i < neiF0.size(); i++)
+		addSlabError(A, b, c, neiF0[i], edges[e].v[0]);
+	std::vector<int> &neiC0 = adjacentcones[edges[e].v[0]];
+	for (int i = 0; i < neiC0.size(); i++)
+		addConeError(A, b, c, neiC0[i], edges[e].v[0]);
 
+	std::vector<int> &neiF1 = adjacentfaces[edges[e].v[1]];
+	for (int i = 0; i < neiF1.size(); i++)
+		addSlabError(A, b, c, neiF1[i], edges[e].v[1]);
+	std::vector<int> &neiC1 = adjacentcones[edges[e].v[1]];
+	for (int i = 0; i < neiC1.size(); i++)
+		addConeError(A, b, c, neiC1[i], edges[e].v[1]);
 
-//double MedialAxisTrans::compContractionTarget(edge_id e) {
-//	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
-//	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
-//	ICPL::Matrix c = ICPL::Matrix::zeros(4, 1);
-//	double cost = 0;
-//	std::vector<int> &neiF0 = adjacentfaces[edges[e].v[0]];
-//	for (int i = 0; i < neiF0.size(); i++)
-//		addSlabError(A, b, c, neiF0[i]);
-//	std::vector<int> &neiC0 = adjacentcones[edges[e].v[0]];
-//	for (int i = 0; i < neiC0.size(); i++)
-//		addConeError(A, b, c, neiC0[i]);
-//
-//	std::vector<int> &neiF1 = adjacentfaces[edges[e].v[1]];
-//	for (int i = 0; i < neiF1.size(); i++)
-//		addSlabError(A, b, c, neiF1[i]);
-//	std::vector<int> &neiC1 = adjacentcones[edges[e].v[1]];
-//	for (int i = 0; i < neiC1.size(); i++)
-//		addConeError(A, b, c, neiC1[i]);
-//
-//	cost = minimizeError(A, b, c, eAttributes[e]);
-//	return cost;
-//}
+	double detA = A.det();
+	ICPL::Matrix m_g = ICPL::Matrix::ones(4, 1);
+	if (abs(detA) > 1e-4) {
+		m_g = ICPL::Matrix::inv(A) * b * (-0.5);
+		eAttributes[e].c_g[0] = m_g.val[0][0];
+		eAttributes[e].c_g[1] = m_g.val[1][0];
+		eAttributes[e].c_g[2] = m_g.val[2][0];
+		eAttributes[e].r_g = m_g.val[3][0];
+		ICPL::Matrix ec = (~m_g) * A * m_g + ~b * m_g + c;
+		return ec.val[0][0];
+	}
+	double c0, c1, ch;
+	m_g.val[0][0] = vertices[edges[e][0]][0];
+	m_g.val[1][0] = vertices[edges[e][0]][1];
+	m_g.val[2][0] = vertices[edges[e][0]][2];
+	c0 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
+	m_g.val[0][0] = vertices[edges[e][1]][0];
+	m_g.val[1][0] = vertices[edges[e][1]][1];
+	m_g.val[2][0] = vertices[edges[e][1]][2];
+	c1 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
+	m_g.val[0][0] = 0.5 * (vertices[edges[e][0]][0] + vertices[edges[e][1]][0]);
+	m_g.val[1][0] = 0.5 * (vertices[edges[e][0]][1] + vertices[edges[e][1]][1]);
+	m_g.val[2][0] = 0.5 * (vertices[edges[e][0]][2] + vertices[edges[e][1]][2]);
+	ch = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
+	int minx = 0;
+	if (c1 < c0)
+		minx = ch < c1 ? 2 : 1;
+	else
+		minx = ch < c0 ? 2 : 0;
+	if (minx == 0) {
+		eAttributes[e].c_g = vertices[edges[e][0]];
+		eAttributes[e].r_g = vAttributes[edges[e][0]].radius;
+		return c0;
+	}
+	else if (minx == 1) {
+		eAttributes[e].c_g = vertices[edges[e][1]];
+		eAttributes[e].r_g = vAttributes[edges[e][1]].radius;
+		return c1;
+	}
+	else {
+		eAttributes[e].c_g = 0.5f * (vertices[edges[e][0]] + vertices[edges[e][1]]);
+		eAttributes[e].r_g = 0.5 * (vAttributes[edges[e][0]].radius + vAttributes[edges[e][1]].radius);
+		return ch;
+	}
+}
 
-
-void MedialAxisTrans::Initialize() {
+void MedialAxisTrans::InitializeEdgeQueue(double k) {
+	int edgenum = edges.size();
+	for (int i = 0; i < edgenum; i++)
+	{
+		eAttributes[i].cost = compContractionTarget(i);
+		double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
+		EdgeIdCost eic(i, mc);
+		prioQue.push(eic);
+	}
+}
+void MedialAxisTrans::Initialize(double k) {
 	//minimize the SQE function of each edge to find the contraction target m_g and coresponding SQE
 
-	// initialize the stability ratio for each edge
+	// initialize the stability ratio for each edge and cost
 	int numEdge = edges.size();
 	eAttributes.resize(numEdge);
 	for (int i = 0; i < numEdge; i++) {
 		eAttributes[i].stability = compStability(edges[i]);
+		eAttributes[i].cost = compContractionTarget(i);
+		double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
+		EdgeIdCost eic(i, mc);
+		prioQue.push(eic);
 	}
 	// construct the contracting edge queue according to the statbility ratio and SQE error of each edge 
+	//InitializeEdgeQueue(k);
 
 
 }
+
+int MedialAxisTrans::Contraction(int sigma) {
+	int iterations = 0;
+	while (!prioQue.empty() && iterations < sigma)
+	{
+		EdgeIdCost eij = prioQue.top();
+		prioQue.pop();
+		if (!vAttributes[edges[eij.id][0]].isvalid || !vAttributes[edges[eij.id][0]].isvalid)
+			continue;
+
+
+	}
+
+}
+
 
 //prepare for rendering(compute indexed vertices and corresponding normals)
 bool is_near(float v1, float v2) {

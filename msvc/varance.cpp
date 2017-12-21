@@ -9,7 +9,7 @@
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
 #include "shader.hpp"
-#include "rendering.h"
+#include "SLrendering.h"
 typedef Vec<3, float> Point;
 GLFWwindow* window;
 
@@ -56,8 +56,9 @@ int main(int argc, char *argv[])
 	MAT.vAttributes[v2].radius = 0.5;
 	MAT.vAttributes[v7].radius = 0.5;
 
+	k = 1e-5;
 	MAT.InitializeSlabNormal();
-	MAT.Initialize();
+	MAT.Initialize(k);
 	MAT.need_tstrips();
 	MAT.need_normals();
 

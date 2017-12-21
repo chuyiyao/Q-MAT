@@ -154,7 +154,7 @@
     <ClInclude Include="controls.hpp" />
     <ClInclude Include="io.h" />
     <ClInclude Include="matrix.h" />
-    <ClInclude Include="rendering.h" />
+    <ClInclude Include="SLrendering.h" />
     <ClInclude Include="shader.hpp" />
     <ClInclude Include="specializedMesh.h" />
   </ItemGroup>
@@ -164,7 +164,6 @@
     <ClCompile Include="matrix.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="specializedMesh.cpp" />
-    <ClCompile Include="TriMesh_Box.cpp" />
     <ClCompile Include="varance.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

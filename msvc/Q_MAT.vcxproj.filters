@@ -21,9 +21,6 @@
     <ClInclude Include="io.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="rendering.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="shader.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -33,11 +30,11 @@
     <ClInclude Include="matrix.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="SLrendering.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TriMesh_Box.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="varance.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

@@ -59,10 +59,8 @@ public:
 
 	std::vector<Edge> edges;
 	std::vector<Cone> cones;
-
 	std::vector<VertexAttrib> vAttributes;
 	std::vector<EdgeAttrib> eAttributes;
-
 	std::vector<vec> slabNormal1;
 	std::vector<vec> slabNormal2;
 	std::vector<std::vector<cone_id> > adjacentcones;
@@ -80,16 +78,17 @@ public:
 	//~MedialSurface();
 	void compSlabNormal(face_id fid);
 	void InitializeSlabNormal();
+	void compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL::Matrix & n2, ICPL::Matrix & n1rot, ICPL::Matrix & n2rot);
 
 	void addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve);
-	void addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co);
+	void addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co, const vertex_id &ve);
 
 	double minimizeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c,EdgeAttrib &eAttri);
-	double compContractionTarget(edge_id e);
+	//double compContractionTarget(edge_id e);
 
 	void Initialize();
 
-	void contractEdge(edge_id e);
+	//void contractEdge(edge_id e);
 	
 
 	//for rendering 
@@ -98,7 +97,8 @@ public:
 
 };
 
-void solveNormalEq(const point &p1, const point &p2, const double &b1,
+void solveNormalEq(const vec &p1, const vec &p2, const double &b1,
 	const double &b2, vec &n1, vec &n2);
 
 void swapComponent(point &p, int i, int j);
+vec RotateHalfPi(vec &n, vec& axis);

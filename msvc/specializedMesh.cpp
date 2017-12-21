@@ -85,8 +85,8 @@ double MedialAxisTrans::compStability(Edge &e){
 }
 
 void MedialAxisTrans::compSlabNormal(face_id fid) {
-	point p1 = vertices[faces[fid][0]] - vertices[faces[fid][1]];
-	point p2 = vertices[faces[fid][0]] - vertices[faces[fid][2]];
+	vec p1 = vertices[faces[fid][0]] - vertices[faces[fid][1]];
+	vec p2 = vertices[faces[fid][0]] - vertices[faces[fid][2]];
 	double b1 = vAttributes[faces[fid][0]].radius - vAttributes[faces[fid][1]].radius;
 	double b2 = vAttributes[faces[fid][0]].radius - vAttributes[faces[fid][2]].radius;
 	double detZ = p1[0] * p2[1] - p2[0] * p1[1];
@@ -109,6 +109,51 @@ void MedialAxisTrans::compSlabNormal(face_id fid) {
 		swapComponent(slabNormal2[fid], 0, 2);
 	}
 }
+
+void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL::Matrix & n2,
+	ICPL::Matrix & n1rot, ICPL::Matrix & n2rot) {
+	vec normal1, normal2;
+	vec p1 = vertices[cones[co][0]] - vertices[cones[co][1]];
+	vec p2;
+	if (p1[0] == 0 && p1[1] == 0)
+		p2 = p1 CROSS(p1 + vec(1, 0, 0));
+	else
+		p2 = p1 CROSS(p1 + vec(0, 0, 1));
+	double b1 = vAttributes[cones[co][0]].radius - vAttributes[cones[co][1]].radius;
+	double b2 = p2 CROSS vertices[cones[co][0]] - p2 DOT vertices[cones[co][0]];
+	p2 *= vAttributes[cones[co][0]].radius;
+	
+	double detZ = p1[0] * p2[1] - p2[0] * p1[1];
+	double detY = p1[0] * p2[2] - p2[0] * p1[2];
+	double detX = p1[2] * p2[1] - p2[2] * p1[1];
+	if (abs(detZ) > 1e-5)
+		solveNormalEq(p1, p2, b1, b2, normal1, normal2);
+	else if (abs(detY) > 1e-5) {
+		swapComponent(p1, 1, 2);
+		swapComponent(p2, 1, 2);
+		solveNormalEq(p1, p2, b1, b2, normal1, normal2);
+		swapComponent(normal1, 1, 2);
+		swapComponent(normal2, 1, 2);
+	}
+	else {
+		swapComponent(p1, 0, 2);
+		swapComponent(p2, 0, 2);
+		solveNormalEq(p1, p2, b1, b2, normal1, normal2);
+		swapComponent(normal1, 0, 2);
+		swapComponent(normal2, 0, 2);
+	}
+	vec normal1rot = RotateHalfPi(normal1, p1);
+	vec normal2rot = RotateHalfPi(normal2, p1);
+	n1.val[0][0] = normal1[0]; n1.val[1][0] = normal1[1]; 
+	n1.val[2][0] = normal1[2]; n1.val[3][0] = 1.0;
+	n2.val[0][0] = normal2[0]; n2.val[1][0] = normal2[1];
+	n2.val[2][0] = normal2[2]; n2.val[3][0] = 1.0;
+	n1rot.val[0][0] = normal1rot[0]; n1rot.val[1][0] = normal1rot[1];
+	n1rot.val[2][0] = normal1rot[2]; n1rot.val[3][0] = 1.0;
+	n2rot.val[0][0] = normal2rot[0]; n2rot.val[1][0] = normal2rot[1];
+	n2rot.val[2][0] = normal2rot[2]; n2rot.val[3][0] = 1.0;
+}
+
 
 void MedialAxisTrans::InitializeSlabNormal() {
 	if (faces.empty())
@@ -138,11 +183,19 @@ void MedialAxisTrans::addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matri
 	for (int i = 0; i < 3; i++){
 		m.val[i][0] = vertices[ve][i];
 	}
-//	vec4 m(vertices[ve][0], vertices[ve][1], vertices[ve][2], vAttributes[ve].radius);
+	m.val[3][0] = vAttributes[ve].radius;
 	ICPL::Matrix tempb = tempA*m;
 	b += tempb*(-2);
+	c += ~m * tempb;
+}
+
+void MedialAxisTrans::addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co, const vertex_id &ve){
+	ICPL::Matrix n1(4, 1), n2(4, 1), n1rot(4, 1), n2rot(4, 1);
+	compConeNormal(co, n1, n2, n1rot, n2rot);
+
 
 }
+
 
 //double MedialAxisTrans::compContractionTarget(edge_id e) {
 //	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
@@ -178,6 +231,8 @@ void MedialAxisTrans::Initialize() {
 		eAttributes[i].stability = compStability(edges[i]);
 	}
 	// construct the contracting edge queue according to the statbility ratio and SQE error of each edge 
+
+
 }
 
 //prepare for rendering(compute indexed vertices and corresponding normals)
@@ -232,7 +287,7 @@ bool getSimilarVertexIndex(
 
 
 
-void solveNormalEq(const point &p1, const point &p2, const double &b1,
+void solveNormalEq(const vec &p1, const vec &p2, const double &b1,
 	const double &b2, vec &n1, vec &n2) {
 	point p = p1 CROSS p2;
 	double xb = p1[0] * b2 - p2[0] * b1, yb = p1[1] * b2 - p2[1] * b1;
@@ -250,9 +305,16 @@ void solveNormalEq(const point &p1, const point &p2, const double &b1,
 	n2[1] = (p[1] * n2[2] - xb) / p[2];
 }
 
-
 void swapComponent(point &p, int i, int j) {
 	float temp = p[i];
 	p[i] = p[j];
 	p[j] = temp;
+}
+
+vec RotateHalfPi(vec &n, vec& axis) {
+	// inverse axis first
+	vec tempk = (-(axis DOT n) / len(axis) ) * axis;
+	vec after = tempk + ((tempk - n) CROSS tempk) / len(tempk);
+
+	return after;
 }

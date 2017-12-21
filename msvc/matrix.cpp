@@ -369,13 +369,12 @@ Matrix &Matrix::operator += (Matrix &M)
 {
 	if (M.m != m || M.n != n )
 	{
-		cerr << "ERROR:dimensionality error (" << A.m << "x" << A.n <<
-			") and (" << B.m << "x" << B.n << ")" << endl;
+		cerr << "ERROR:dimensionality error in Matrix += operations (" << endl;
 		exit(0);
 	}
-	
 	for (int i = 0; i < m; i++)
-		v[i] += x[i];
+		for (int j = 0; j < n; j++)
+			val[i][j] += M.val[i][j];
 	return *this;
 }
 

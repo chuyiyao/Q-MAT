@@ -39,8 +39,6 @@ int main(int argc, char *argv[])
 	vertex_id v5 = MAT.add_vertex(Point(0, 0, 1));
 	vertex_id v6 = MAT.add_vertex(Point(0, -1, 0));
 	vertex_id v7 = MAT.add_vertex(Point(0, 1, 0));
-	MAT.need_VertexAttributes();
-
 
 	face_id f = MAT.add_face(v0, v1, v2);
 	MAT.add_face(v0, v2, v3);
@@ -50,14 +48,12 @@ int main(int argc, char *argv[])
 	MAT.add_face(v0, v2, v7);
 	edge_id e = MAT.add_cone(v6, v1);
 
-
 	MAT.vAttributes[v0].radius = 1;
 	MAT.vAttributes[v1].radius = 0.5;
 	MAT.vAttributes[v2].radius = 0.5;
 	MAT.vAttributes[v7].radius = 0.5;
 
-	k = 1e-5;
-	MAT.InitializeSlabNormal();
+	double k = 1e-5;
 	MAT.Initialize(k);
 	MAT.need_tstrips();
 	MAT.need_normals();

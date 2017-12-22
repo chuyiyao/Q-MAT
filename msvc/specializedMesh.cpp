@@ -20,6 +20,16 @@ std::ostream &operator << (std::ostream &os, const Face &f) {
 
 vertex_id MedialAxisTrans::add_vertex(Point p) {
 	vertices.push_back(p);
+	VertexAttrib vA;
+	vAttributes.push_back(vA);
+	std::vector<int> nei;
+	neighbors.push_back(nei);
+	adjacentfaces.push_back(nei);
+	adjacentcones.push_back(nei);
+	std::set<int> nei1;
+	adjVertices.push_back(nei1);
+	adjFaces.push_back(nei1);
+	adjCones.push_back(nei1);
 	return vertices.size() - 1;
 
 }
@@ -29,6 +39,8 @@ edge_id MedialAxisTrans::add_edge(vertex_id i, vertex_id j) {
 		edges.push_back(Edge(i, j));
 		neighbors[i].push_back(j);
 		neighbors[j].push_back(i);
+		EdgeAttrib eA;
+		eAttributes.push_back(eA);
 		return edges.size() - 1;
 	}
 	return -1;
@@ -43,6 +55,8 @@ face_id MedialAxisTrans::add_face(vertex_id i, vertex_id j, vertex_id k) {
 	add_edge(i, j);
 	add_edge(i, k);
 	add_edge(j, k);
+	slabNormal1.push_back(vec(0, 0, 0));
+	slabNormal2.push_back(vec(0, 0, 0));
 	return fid;
 }
 
@@ -50,6 +64,7 @@ cone_id MedialAxisTrans::add_cone(vertex_id i, vertex_id j) {
 	int index = add_edge(i, j);
 	if (index == -1)
 		return -1;
+	eAttributes[index].isManifold = false;
 	cones.push_back(Cone(i, j));
 	cone_id cid = cones.size() - 1;
 	adjacentcones[i].push_back(cid);
@@ -156,8 +171,8 @@ void MedialAxisTrans::InitializeSlabNormal() {
 	if (faces.empty())
 		return;
 	int nf = faces.size();
-	slabNormal1.resize(nf);
-	slabNormal2.resize(nf);
+	//slabNormal1.resize(nf);
+	//slabNormal2.resize(nf);
 
 	// Initialize faces normal
 	for (int i = 0; i < nf; i++) {
@@ -220,12 +235,12 @@ double MedialAxisTrans::compContractionTarget(edge_id e) {
 	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
 	ICPL::Matrix c = ICPL::Matrix::zeros(1, 1);
 	double cost = 0;
-	std::vector<int> &neiF0 = adjacentfaces[edges[e].v[0]];
+	std::vector<int> &neiF0 = adjacentfaces[edges[e][0]];
 	for (int i = 0; i < neiF0.size(); i++)
-		addSlabError(A, b, c, neiF0[i], edges[e].v[0]);
-	std::vector<int> &neiC0 = adjacentcones[edges[e].v[0]];
+		addSlabError(A, b, c, neiF0[i], edges[e][0]);
+	std::vector<int> &neiC0 = adjacentcones[edges[e][0]];
 	for (int i = 0; i < neiC0.size(); i++)
-		addConeError(A, b, c, neiC0[i], edges[e].v[0]);
+		addConeError(A, b, c, neiC0[i], edges[e][0]);
 
 	std::vector<int> &neiF1 = adjacentfaces[edges[e].v[1]];
 	for (int i = 0; i < neiF1.size(); i++)
@@ -280,22 +295,39 @@ double MedialAxisTrans::compContractionTarget(edge_id e) {
 	}
 }
 
-void MedialAxisTrans::InitializeEdgeQueue(double k) {
-	int edgenum = edges.size();
-	for (int i = 0; i < edgenum; i++)
-	{
-		eAttributes[i].cost = compContractionTarget(i);
-		double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
-		EdgeIdCost eic(i, mc);
-		prioQue.push(eic);
-	}
-}
 void MedialAxisTrans::Initialize(double k) {
+	// Initialize slab normal & intialized the remained id of all vertices,faces,cones
+	int num = faces.size();
+	for (int i = 0; i < num; i++) {
+		compSlabNormal(i);
+		FacesRemained.insert(i);
+	}
+	num = cones.size();
+	for (int i = 0; i < num; i++) {
+		ConesRemained.insert(i);
+	}
+	num = vertices.size();
+	for (int i = 0; i < num; i++) {
+		VerticesRemained.insert(i);
+		int numm = neighbors[i].size();
+		for (int j = 0; j < numm; j++)
+		{
+			adjVertices[i].insert(neighbors[i][j]);
+		}
+		numm = adjacentfaces[i].size();
+		for (int j = 0; j < numm; j++)
+		{
+			adjFaces[i].insert(adjacentfaces[i][j]);
+		}
+		numm = adjacentcones[i].size();
+		for (int j = 0; j < numm; j++)
+		{
+			adjCones[i].insert(adjacentcones[i][j]);
+		}
+	}
 	//minimize the SQE function of each edge to find the contraction target m_g and coresponding SQE
-
 	// initialize the stability ratio for each edge and cost
 	int numEdge = edges.size();
-	eAttributes.resize(numEdge);
 	for (int i = 0; i < numEdge; i++) {
 		eAttributes[i].stability = compStability(edges[i]);
 		eAttributes[i].cost = compContractionTarget(i);
@@ -308,19 +340,74 @@ void MedialAxisTrans::Initialize(double k) {
 
 
 }
-
+void MedialAxisTrans::connectFace2Target(face_id & fa, int v0, int vid) {
+	Face fac;
+	if (faces[fa][0] == v0) {
+		fac[0] = vid;
+		fac[1] = faces[fa][1];
+		fac[2] = faces[fa][2];
+	}
+	else {
+		fac[0] = faces[fa][0];
+		if (faces[fa][1] == v0) {
+			fac[1] = vid;
+			fac[2] = faces[fa][2];
+		}
+		else {
+			fac[1] = faces[fa][1];
+			fac[2] = vid;
+		}
+	}
+	faces.push_back(fac);
+	face_id fid = faces.size() - 1;
+	adjacentfaces[fac[0]].push_back(fid);
+	adjacentfaces[fac[1]].push_back(fid);
+	adjacentfaces[fac[2]].push_back(fid);
+	add_edge(i, j);
+	add_edge(i, k);
+	add_edge(j, k);
+	slabNormal1.push_back(vec(0, 0, 0));
+	slabNormal2.push_back(vec(0, 0, 0));
+}
 int MedialAxisTrans::Contraction(int sigma) {
 	int iterations = 0;
 	while (!prioQue.empty() && iterations < sigma)
 	{
 		EdgeIdCost eij = prioQue.top();
 		prioQue.pop();
-		if (!vAttributes[edges[eij.id][0]].isvalid || !vAttributes[edges[eij.id][0]].isvalid)
+		int v0 = edges[eij.id][0];
+		int v1 = edges[eij.id][1];
+		if (!vAttributes[v0].isvalid || !vAttributes[v0].isvalid)
 			continue;
+		//if (!topologyCheck())
+		//	continue;
+		vAttributes[v0].isvalid = false;
+		vAttributes[v1].isvalid = false;
+		int vid = add_vertex(eAttributes[eij.id].c_g);
+		vAttributes[vid].radius = eAttributes[eij.id].r_g;
+		VerticesRemained.erase(v0);
+		VerticesRemained.erase(v1);
+		std::vector<int>::iterator ite = neighbors[v0].begin();
+		for (; ite != neighbors[v0].end(); ite++)
+		{
+			if (*ite != v1)
+				neighbors[vid].push_back(*ite);
+		}
+		ite = neighbors[v1].begin();
+		for (; ite != neighbors[v1].end(); ite++)
+		{
+			if (*ite != v0)
+				neighbors[vid].push_back(*ite);
+		}
+		ite = adjacentfaces[v0].begin();
+		for (; ite != adjacentfaces[v0].end(); ite++)
+		{
+			
+		}
 
 
 	}
-
+	return iterations;
 }
 
 

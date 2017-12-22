@@ -87,6 +87,9 @@ public:
 	std::set<cone_id> ConesRemained;
 //	std::set<edge_id> EdgesRemained;  //seem useless
 
+	std::vector<std::set<int> > adjFaces;
+	std::vector<std::set<int> > adjCones;
+	std::vector<std::set<int> > adjVertices;
 
 	vertex_id add_vertex(Point p);
 	edge_id add_edge(vertex_id i, vertex_id j);
@@ -108,8 +111,8 @@ public:
 	double compContractionTarget(edge_id e);
 
 	void Initialize(double k);
-	void InitializeEdgeQueue(double k);
 	//void contractEdge(edge_id e);
+	void connectFace2Target(face_id &fa, int v0, int vid);
 	int Contraction(int sigma);
 
 	//for rendering 

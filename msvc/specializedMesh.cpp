@@ -88,11 +88,11 @@ void MedialAxisTrans::need_VertexAttributes() {
 
 }
 
-double MedialAxisTrans::compStability(Edge &e){
-	double r1 = vAttributes[e[0]].radius;
-	double r2 = vAttributes[e[1]].radius;
-	Point p1 = vertices[e[0]];
-	Point p2 = vertices[e[1]];
+double MedialAxisTrans::compStability(edge_id &e){
+	double r1 = vAttributes[edges[e][0]].radius;
+	double r2 = vAttributes[edges[e][1]].radius;
+	Point p1 = vertices[edges[e][0]];
+	Point p2 = vertices[edges[e][1]];
 	double r_res = abs(r1 - r2);
 	double c_res = dist(p1, p2);
 	double res = c_res - r_res;
@@ -167,19 +167,7 @@ void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL:
 	n2rot.val[0][0] = normal2rot[0]; n2rot.val[1][0] = normal2rot[1];
 	n2rot.val[2][0] = normal2rot[2]; n2rot.val[3][0] = 1.0;
 }
-void MedialAxisTrans::InitializeSlabNormal() {
-	if (faces.empty())
-		return;
-	int nf = faces.size();
-	//slabNormal1.resize(nf);
-	//slabNormal2.resize(nf);
 
-	// Initialize faces normal
-	for (int i = 0; i < nf; i++) {
-		compSlabNormal(i);
-	}
-
-}
 
 void MedialAxisTrans::addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve) {
 	vec4 n1(slabNormal1[fa][0], slabNormal1[fa][1], slabNormal1[fa][2], 1.0f);
@@ -235,19 +223,20 @@ double MedialAxisTrans::compContractionTarget(edge_id e) {
 	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
 	ICPL::Matrix c = ICPL::Matrix::zeros(1, 1);
 	double cost = 0;
-	std::vector<int> &neiF0 = adjacentfaces[edges[e][0]];
+	int v0 = edges[e][0], v1 = edges[e][1];
+	std::vector<int> &neiF0 = adjacentfaces[v0];
 	for (int i = 0; i < neiF0.size(); i++)
-		addSlabError(A, b, c, neiF0[i], edges[e][0]);
-	std::vector<int> &neiC0 = adjacentcones[edges[e][0]];
+		addSlabError(A, b, c, neiF0[i], v0);
+	std::vector<int> &neiC0 = adjacentcones[v0];
 	for (int i = 0; i < neiC0.size(); i++)
-		addConeError(A, b, c, neiC0[i], edges[e][0]);
+		addConeError(A, b, c, neiC0[i], v0);
 
-	std::vector<int> &neiF1 = adjacentfaces[edges[e].v[1]];
+	std::vector<int> &neiF1 = adjacentfaces[v1];
 	for (int i = 0; i < neiF1.size(); i++)
-		addSlabError(A, b, c, neiF1[i], edges[e].v[1]);
-	std::vector<int> &neiC1 = adjacentcones[edges[e].v[1]];
+		addSlabError(A, b, c, neiF1[i], v1);
+	std::vector<int> &neiC1 = adjacentcones[v1];
 	for (int i = 0; i < neiC1.size(); i++)
-		addConeError(A, b, c, neiC1[i], edges[e].v[1]);
+		addConeError(A, b, c, neiC1[i], v1);
 
 	double detA = A.det();
 	ICPL::Matrix m_g = ICPL::Matrix::ones(4, 1);
@@ -261,9 +250,80 @@ double MedialAxisTrans::compContractionTarget(edge_id e) {
 		return ec.val[0][0];
 	}
 	double c0, c1, ch;
-	m_g.val[0][0] = vertices[edges[e][0]][0];
-	m_g.val[1][0] = vertices[edges[e][0]][1];
-	m_g.val[2][0] = vertices[edges[e][0]][2];
+	m_g.val[0][0] = vertices[v0][0];
+	m_g.val[1][0] = vertices[v0][1];
+	m_g.val[2][0] = vertices[v0][2];
+	m_g.val[3][0] = vAttributes[v0].radius;
+	c0 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
+	m_g.val[0][0] = vertices[v1][0];
+	m_g.val[1][0] = vertices[v1][1];
+	m_g.val[2][0] = vertices[v1][2];
+	m_g.val[3][0] = vAttributes[v0].radius;
+	c1 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
+	m_g.val[0][0] = 0.5 * (vertices[v0][0] + vertices[v1][0]);
+	m_g.val[1][0] = 0.5 * (vertices[v0][1] + vertices[v1][1]);
+	m_g.val[2][0] = 0.5 * (vertices[v0][2] + vertices[v1][2]);
+	ch = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
+	int minx = 0;
+	if (c1 < c0)
+		minx = ch < c1 ? 2 : 1;
+	else
+		minx = ch < c0 ? 2 : 0;
+	if (minx == 0) {
+		eAttributes[e].c_g = vertices[v0];
+		eAttributes[e].r_g = vAttributes[v0].radius;
+		return c0;
+	}
+	else if (minx == 1) {
+		eAttributes[e].c_g = vertices[v1];
+		eAttributes[e].r_g = vAttributes[v1].radius;
+		return c1;
+	}
+	else {
+		eAttributes[e].c_g = 0.5f * (vertices[v0] + vertices[v1]);
+		eAttributes[e].r_g = 0.5 * (vAttributes[v0].radius + vAttributes[v1].radius);
+		return ch;
+	}
+}
+double MedialAxisTrans::NewlyCompContractionTarget(edge_id e) {
+	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
+	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
+	ICPL::Matrix c = ICPL::Matrix::zeros(1, 1);
+	double cost = 0;
+	int v0 = edges[e][0], v1 = edges[e][1];
+	std::set<int>::iterator ite = adjFaces[v0].begin();
+	for  (; ite != adjFaces[v0].end(); ite++)
+		addSlabError(A, b, c, *ite , v0);
+
+	ite = adjCones[v0].begin();
+	for (; ite != adjCones[v0].end(); ite++)
+		addConeError(A, b, c, *ite, v0);
+
+	ite = adjFaces[v1].begin();
+	for (; ite != adjFaces[v1].end(); ite++)
+		addSlabError(A, b, c, *ite, v1);
+
+	ite = adjCones[v1].begin();
+	for (; ite != adjCones[v1].end(); ite++)
+		addConeError(A, b, c, *ite, v1);
+
+	double detA = A.det();
+	ICPL::Matrix m_g = ICPL::Matrix::ones(4, 1);
+	if (abs(detA) > 1e-4) {
+		m_g = ICPL::Matrix::inv(A) * b * (-0.5);
+		eAttributes[e].c_g[0] = m_g.val[0][0];
+		eAttributes[e].c_g[1] = m_g.val[1][0];
+		eAttributes[e].c_g[2] = m_g.val[2][0];
+		eAttributes[e].r_g = m_g.val[3][0];
+		ICPL::Matrix ec = (~m_g) * A * m_g + ~b * m_g + c;
+		return ec.val[0][0];
+	}
+	double c0, c1, ch;
+	m_g.val[0][0] = vertices[v0][0];
+	m_g.val[1][0] = vertices[v0][1];
+	m_g.val[2][0] = vertices[v0][2];
+	eAttributes[e].r_g = m_g.val[3][0];
+
 	c0 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
 	m_g.val[0][0] = vertices[edges[e][1]][0];
 	m_g.val[1][0] = vertices[edges[e][1]][1];
@@ -329,7 +389,7 @@ void MedialAxisTrans::Initialize(double k) {
 	// initialize the stability ratio for each edge and cost
 	int numEdge = edges.size();
 	for (int i = 0; i < numEdge; i++) {
-		eAttributes[i].stability = compStability(edges[i]);
+		eAttributes[i].stability = compStability(i);
 		eAttributes[i].cost = compContractionTarget(i);
 		double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
 		EdgeIdCost eic(i, mc);
@@ -340,34 +400,63 @@ void MedialAxisTrans::Initialize(double k) {
 
 
 }
-void MedialAxisTrans::connectFace2Target(face_id & fa, int v0, int vid) {
+void MedialAxisTrans::connectFace2Target(const face_id & fa, const int &v0, const int &vid, std::vector<int> &edgelist) {
 	Face fac;
-	if (faces[fa][0] == v0) {
+	int idx = faces[fa].indexof(v0);
+	if (idx == 0) {
 		fac[0] = vid;
-		fac[1] = faces[fa][1];
-		fac[2] = faces[fa][2];
+		fac[1] = faces[fa][1]; 
+		fac[2] = faces[fa][2]; 
 	}
 	else {
-		fac[0] = faces[fa][0];
-		if (faces[fa][1] == v0) {
+		fac[0] = faces[fa][0]; 
+		if (idx == 1) {
 			fac[1] = vid;
-			fac[2] = faces[fa][2];
+			fac[2] = faces[fa][2]; 
 		}
 		else {
-			fac[1] = faces[fa][1];
+			fac[1] = faces[fa][1]; 
 			fac[2] = vid;
 		}
 	}
 	faces.push_back(fac);
 	face_id fid = faces.size() - 1;
-	adjacentfaces[fac[0]].push_back(fid);
-	adjacentfaces[fac[1]].push_back(fid);
-	adjacentfaces[fac[2]].push_back(fid);
-	add_edge(i, j);
-	add_edge(i, k);
-	add_edge(j, k);
+	FacesRemained.insert(fid);
+	FacesRemained.erase(fa);
+	adjFaces[fac[0]].insert(fid);
+	adjFaces[fac[1]].insert(fid);
+	adjFaces[fac[2]].insert(fid);
 	slabNormal1.push_back(vec(0, 0, 0));
 	slabNormal2.push_back(vec(0, 0, 0));
+	compSlabNormal(fid);
+
+	int v1 = fac[(idx + 1) % 3], v2 = fac[(idx + 2) % 3];
+	adjFaces[v1].erase(fa);
+	adjFaces[v2].erase(fa);
+	if (find(adjVertices[vid].begin(), adjVertices[vid].end(),v1 ) == adjVertices[vid].end()) {
+		adjVertices[vid].insert(v1); 
+		adjVertices[v1].insert(vid);
+		edges.push_back(Edge(vid, v1));
+		int eid = edges.size() - 1;
+		
+		EdgeAttrib eA;
+		eAttributes.push_back(eA);
+		eAttributes[eid].stability = compStability(eid);
+		edgelist.push_back(eid);
+	}
+	if (find(adjVertices[vid].begin(), adjVertices[vid].end(), v2) == adjVertices[vid].end()) {
+		adjVertices[vid].insert(v2);
+		adjVertices[v2].insert(vid);
+		edges.push_back(Edge(vid, v2));
+		int eid = edges.size() - 1;
+
+		EdgeAttrib eA;
+		eAttributes.push_back(eA);
+		eAttributes[eid].stability = compStability(eid);
+		edgelist.push_back(eid);
+	}
+
+
 }
 int MedialAxisTrans::Contraction(int sigma) {
 	int iterations = 0;
@@ -377,17 +466,14 @@ int MedialAxisTrans::Contraction(int sigma) {
 		prioQue.pop();
 		int v0 = edges[eij.id][0];
 		int v1 = edges[eij.id][1];
-		if (!vAttributes[v0].isvalid || !vAttributes[v0].isvalid)
+		if (!vAttributes[v0].isvalid || !vAttributes[v1].isvalid)
 			continue;
 		//if (!topologyCheck())
 		//	continue;
-		vAttributes[v0].isvalid = false;
-		vAttributes[v1].isvalid = false;
+		
 		int vid = add_vertex(eAttributes[eij.id].c_g);
 		vAttributes[vid].radius = eAttributes[eij.id].r_g;
-		VerticesRemained.erase(v0);
-		VerticesRemained.erase(v1);
-		std::vector<int>::iterator ite = neighbors[v0].begin();
+		/*std::vector<int>::iterator ite = neighbors[v0].begin();
 		for (; ite != neighbors[v0].end(); ite++)
 		{
 			if (*ite != v1)
@@ -398,13 +484,34 @@ int MedialAxisTrans::Contraction(int sigma) {
 		{
 			if (*ite != v0)
 				neighbors[vid].push_back(*ite);
-		}
-		ite = adjacentfaces[v0].begin();
-		for (; ite != adjacentfaces[v0].end(); ite++)
+		}*/
+		std::vector<int> edgelist;
+		std::set<int>::iterator ite = adjFaces[v0].begin();
+		for (; ite != adjFaces[v0].end(); ite++)
 		{
-			
+			connectFace2Target(*ite, v0, vid, edgelist);
+		}
+		ite = adjFaces[v1].begin();
+		for (; ite != adjFaces[v1].end(); ite++)
+		{
+			connectFace2Target(*ite, v1, vid, edgelist);
 		}
 
+		std::vector<int>::iterator itera = edgelist.begin();
+		for (; itera != edgelist.end(); itera++)
+		{
+			eAttributes[*itera].cost = compContractionTarget(*itera);
+			double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
+			EdgeIdCost eic(i, mc);
+			prioQue.push(eic);
+		}
+		
+		
+
+		vAttributes[v0].isvalid = false;
+		vAttributes[v1].isvalid = false;
+		VerticesRemained.erase(v0);
+		VerticesRemained.erase(v1);
 
 	}
 	return iterations;

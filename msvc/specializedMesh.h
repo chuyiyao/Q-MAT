@@ -99,7 +99,6 @@ public:
 	void need_VertexAttributes();
 	double compStability(const edge_id &e);
 
-
 	MedialAxisTrans() : TriMesh() { };
 	//~MedialSurface();
 	void compSlabNormal(const face_id &fid);

@@ -88,7 +88,7 @@ void MedialAxisTrans::need_VertexAttributes() {
 
 }
 
-double MedialAxisTrans::compStability(edge_id &e){
+double MedialAxisTrans::compStability(const edge_id &e){
 	double r1 = vAttributes[edges[e][0]].radius;
 	double r2 = vAttributes[edges[e][1]].radius;
 	Point p1 = vertices[edges[e][0]];
@@ -99,7 +99,7 @@ double MedialAxisTrans::compStability(edge_id &e){
 	return (res > 0 ? res/c_res : 0);
 }
 
-void MedialAxisTrans::compSlabNormal(face_id fid) {
+void MedialAxisTrans::compSlabNormal(const face_id& fid) {
 	vec p1 = vertices[faces[fid][0]] - vertices[faces[fid][1]];
 	vec p2 = vertices[faces[fid][0]] - vertices[faces[fid][2]];
 	double b1 = vAttributes[faces[fid][0]].radius - vAttributes[faces[fid][1]].radius;
@@ -218,7 +218,7 @@ void MedialAxisTrans::addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matri
 	c += ~m * tempb;
 
 }
-double MedialAxisTrans::compContractionTarget(edge_id e) {
+double MedialAxisTrans::compContractionTarget(const edge_id &e) {
 	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
 	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
 	ICPL::Matrix c = ICPL::Matrix::zeros(1, 1);
@@ -258,11 +258,12 @@ double MedialAxisTrans::compContractionTarget(edge_id e) {
 	m_g.val[0][0] = vertices[v1][0];
 	m_g.val[1][0] = vertices[v1][1];
 	m_g.val[2][0] = vertices[v1][2];
-	m_g.val[3][0] = vAttributes[v0].radius;
+	m_g.val[3][0] = vAttributes[v1].radius;
 	c1 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
 	m_g.val[0][0] = 0.5 * (vertices[v0][0] + vertices[v1][0]);
 	m_g.val[1][0] = 0.5 * (vertices[v0][1] + vertices[v1][1]);
 	m_g.val[2][0] = 0.5 * (vertices[v0][2] + vertices[v1][2]);
+	m_g.val[3][0] = 0.5 * (vAttributes[v0].radius + vAttributes[v1].radius);
 	ch = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
 	int minx = 0;
 	if (c1 < c0)
@@ -285,7 +286,7 @@ double MedialAxisTrans::compContractionTarget(edge_id e) {
 		return ch;
 	}
 }
-double MedialAxisTrans::NewlyCompContractionTarget(edge_id e) {
+double MedialAxisTrans::NewlyCompContractionTarget(const edge_id &e) {
 	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
 	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
 	ICPL::Matrix c = ICPL::Matrix::zeros(1, 1);
@@ -322,16 +323,17 @@ double MedialAxisTrans::NewlyCompContractionTarget(edge_id e) {
 	m_g.val[0][0] = vertices[v0][0];
 	m_g.val[1][0] = vertices[v0][1];
 	m_g.val[2][0] = vertices[v0][2];
-	eAttributes[e].r_g = m_g.val[3][0];
-
+	m_g.val[3][0] = vAttributes[v0].radius;
 	c0 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
-	m_g.val[0][0] = vertices[edges[e][1]][0];
-	m_g.val[1][0] = vertices[edges[e][1]][1];
-	m_g.val[2][0] = vertices[edges[e][1]][2];
+	m_g.val[0][0] = vertices[v1][0];
+	m_g.val[1][0] = vertices[v1][1];
+	m_g.val[2][0] = vertices[v1][2];
+	m_g.val[3][0] = vAttributes[v1].radius;
 	c1 = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
-	m_g.val[0][0] = 0.5 * (vertices[edges[e][0]][0] + vertices[edges[e][1]][0]);
-	m_g.val[1][0] = 0.5 * (vertices[edges[e][0]][1] + vertices[edges[e][1]][1]);
-	m_g.val[2][0] = 0.5 * (vertices[edges[e][0]][2] + vertices[edges[e][1]][2]);
+	m_g.val[0][0] = 0.5 * (vertices[v0][0] + vertices[v1][0]);
+	m_g.val[1][0] = 0.5 * (vertices[v0][1] + vertices[v1][1]);
+	m_g.val[2][0] = 0.5 * (vertices[v0][2] + vertices[v1][2]);
+	m_g.val[3][0] = 0.5 * (vAttributes[v0].radius + vAttributes[v1].radius);
 	ch = ((~m_g) * A * m_g + ~b * m_g + c).val[0][0];
 	int minx = 0;
 	if (c1 < c0)
@@ -339,18 +341,18 @@ double MedialAxisTrans::NewlyCompContractionTarget(edge_id e) {
 	else
 		minx = ch < c0 ? 2 : 0;
 	if (minx == 0) {
-		eAttributes[e].c_g = vertices[edges[e][0]];
-		eAttributes[e].r_g = vAttributes[edges[e][0]].radius;
+		eAttributes[e].c_g = vertices[v0];
+		eAttributes[e].r_g = vAttributes[v0].radius;
 		return c0;
 	}
 	else if (minx == 1) {
-		eAttributes[e].c_g = vertices[edges[e][1]];
-		eAttributes[e].r_g = vAttributes[edges[e][1]].radius;
+		eAttributes[e].c_g = vertices[v1];
+		eAttributes[e].r_g = vAttributes[v1].radius;
 		return c1;
 	}
 	else {
-		eAttributes[e].c_g = 0.5f * (vertices[edges[e][0]] + vertices[edges[e][1]]);
-		eAttributes[e].r_g = 0.5 * (vAttributes[edges[e][0]].radius + vAttributes[edges[e][1]].radius);
+		eAttributes[e].c_g = 0.5f * (vertices[v0] + vertices[v1]);
+		eAttributes[e].r_g = 0.5 * (vAttributes[v0].radius + vAttributes[v1].radius);
 		return ch;
 	}
 }
@@ -400,7 +402,7 @@ void MedialAxisTrans::Initialize(double k) {
 
 
 }
-void MedialAxisTrans::connectFace2Target(const face_id & fa, const int &v0, const int &vid, std::vector<int> &edgelist) {
+void MedialAxisTrans::connectFace2Target(const face_id &fa, const vertex_id &v0, const vertex_id &vid, std::vector<int> &edgelist) {
 	Face fac;
 	int idx = faces[fa].indexof(v0);
 	if (idx == 0) {
@@ -458,7 +460,44 @@ void MedialAxisTrans::connectFace2Target(const face_id & fa, const int &v0, cons
 
 
 }
-int MedialAxisTrans::Contraction(int sigma) {
+void MedialAxisTrans::connectCone2Target(const cone_id &co, const vertex_id &v0, const vertex_id &vid, std::vector<int> &edgelist) {
+	Cone con;
+	int idx;
+	if (cones[co][0]==v0)
+	{
+		idx = 0;
+		con[0] = vid;
+		con[1] = cones[co][1];
+	}
+	else
+	{
+		idx = 1;
+		con[0] = cones[co][1];
+		con[1] = vid;
+	}
+	cones.push_back(con);
+	cone_id cid = cones.size() - 1;
+	ConesRemained.insert(cid);
+	ConesRemained.erase(co);
+	adjCones[con[0]].insert(cid);
+	adjCones[con[1]].insert(cid);
+
+	int v1 = con[(idx + 1) % 2];
+	adjFaces[v1].erase(co);
+	if (find(adjVertices[vid].begin(), adjVertices[vid].end(), v1) == adjVertices[vid].end()) {
+		adjVertices[vid].insert(v1);
+		adjVertices[v1].insert(vid);
+		edges.push_back(Edge(vid, v1));
+		int eid = edges.size() - 1;
+
+		EdgeAttrib eA;
+		eAttributes.push_back(eA);
+		eAttributes[eid].stability = compStability(eid);
+		eAttributes[eid].isManifold = false;
+		edgelist.push_back(eid);
+	}
+}
+int MedialAxisTrans::Contraction(int sigma, double k) {
 	int iterations = 0;
 	while (!prioQue.empty() && iterations < sigma)
 	{
@@ -473,18 +512,7 @@ int MedialAxisTrans::Contraction(int sigma) {
 		
 		int vid = add_vertex(eAttributes[eij.id].c_g);
 		vAttributes[vid].radius = eAttributes[eij.id].r_g;
-		/*std::vector<int>::iterator ite = neighbors[v0].begin();
-		for (; ite != neighbors[v0].end(); ite++)
-		{
-			if (*ite != v1)
-				neighbors[vid].push_back(*ite);
-		}
-		ite = neighbors[v1].begin();
-		for (; ite != neighbors[v1].end(); ite++)
-		{
-			if (*ite != v0)
-				neighbors[vid].push_back(*ite);
-		}*/
+
 		std::vector<int> edgelist;
 		std::set<int>::iterator ite = adjFaces[v0].begin();
 		for (; ite != adjFaces[v0].end(); ite++)
@@ -496,18 +524,25 @@ int MedialAxisTrans::Contraction(int sigma) {
 		{
 			connectFace2Target(*ite, v1, vid, edgelist);
 		}
+		ite = adjCones[v0].begin();
+		for (; ite != adjCones[v0].end(); ite++)
+		{
+			connectCone2Target(*ite, v0, vid, edgelist);
+		}
+		ite = adjCones[v1].begin();
+		for (; ite != adjCones[v1].end(); ite++)
+		{
+			connectCone2Target(*ite, v1, vid, edgelist);
+		}
 
 		std::vector<int>::iterator itera = edgelist.begin();
 		for (; itera != edgelist.end(); itera++)
 		{
 			eAttributes[*itera].cost = compContractionTarget(*itera);
-			double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
-			EdgeIdCost eic(i, mc);
+			double mc = (eAttributes[*itera].cost + k)*eAttributes[*itera].stability*eAttributes[*itera].stability;
+			EdgeIdCost eic(*itera, mc);
 			prioQue.push(eic);
 		}
-		
-		
-
 		vAttributes[v0].isvalid = false;
 		vAttributes[v1].isvalid = false;
 		VerticesRemained.erase(v0);

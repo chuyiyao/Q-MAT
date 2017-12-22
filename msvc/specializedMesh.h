@@ -97,23 +97,24 @@ public:
 	cone_id add_cone(vertex_id i, vertex_id j);
 	
 	void need_VertexAttributes();
-	double compStability(edge_id &e);
+	double compStability(const edge_id &e);
 
 
 	MedialAxisTrans() : TriMesh() { };
 	//~MedialSurface();
-	void compSlabNormal(face_id fid);
-	void compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL::Matrix & n2, ICPL::Matrix & n1rot, ICPL::Matrix & n2rot);
-
+	void compSlabNormal(const face_id &fid);
+	void compConeNormal(const cone_id &co, ICPL::Matrix &n1, ICPL::Matrix &n2, ICPL::Matrix &n1rot, ICPL::Matrix &n2rot);
+	
 	void addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve);
 	void addConeError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const cone_id &co, const vertex_id &ve);
-	double compContractionTarget(edge_id e);
-	double NewlyCompContractionTarget(edge_id e);
+	double compContractionTarget(const edge_id &e);
+	double NewlyCompContractionTarget(const edge_id &e);
 
 	void Initialize(double k);
 	//void contractEdge(edge_id e);
-	void connectFace2Target(const face_id &fa, const int &v0, const int &vid, std::vector<int> &edgelist);
-	int Contraction(int sigma);
+	void connectFace2Target(const face_id &fa, const vertex_id &v0, const vertex_id &vid, std::vector<int> &edgelist);
+	void connectCone2Target(const cone_id &co, const vertex_id &v0, const vertex_id &vid, std::vector<int> &edgelist);
+	int Contraction(int sigma, double k); //doing the contraction, where sigma is the maximum iterations
 
 	//for rendering 
 	//void indexVBO_V_vN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);

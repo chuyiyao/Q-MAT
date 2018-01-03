@@ -77,6 +77,8 @@ void MedialAxisTrans::need_VertexAttributes() {
 	if (vertices.empty())
 		return;
 	int nv = vertices.size();
+	if (vAttributes.size() == nv)
+		return;
 	vAttributes.resize(nv);
 
 	if (neighbors.empty())
@@ -86,6 +88,20 @@ void MedialAxisTrans::need_VertexAttributes() {
 	if (adjacentcones.empty())
 		adjacentcones.resize(nv);
 
+}
+
+void MedialAxisTrans::need_normalize() {
+	if (bbox.max.max() <= 1.0f && bbox.min.min() >= -1.0f)
+		return;
+	int indx = 0;
+	float dimLength = bbox.size().max();	
+	Point cen = bbox.center();
+	std::cout << cen << std::endl;
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		vertices[i] = 2.0f * (vertices[i] - cen) / dimLength;
+	}
+	need_bbox();
 }
 
 double MedialAxisTrans::compStability(const edge_id &e){
@@ -358,18 +374,18 @@ double MedialAxisTrans::NewlyCompContractionTarget(const edge_id &e) {
 }
 
 void MedialAxisTrans::Initialize(double k) {
+	vN = vertices.size();
+	fN = faces.size();
+	cN = cones.size();
+
+	need_tstrips();
+	need_normals();
+	need_bbox();
+	need_normalize();
+
 	// Initialize slab normal & intialized the remained id of all vertices,faces,cones
-	int num = faces.size();
-	for (int i = 0; i < num; i++) {
-		compSlabNormal(i);
-		FacesRemained.insert(i);
-	}
-	num = cones.size();
-	for (int i = 0; i < num; i++) {
-		ConesRemained.insert(i);
-	}
-	num = vertices.size();
-	for (int i = 0; i < num; i++) {
+	
+	for (int i = 0; i < vN; i++) {
 		VerticesRemained.insert(i);
 		int numm = neighbors[i].size();
 		for (int j = 0; j < numm; j++)
@@ -387,6 +403,16 @@ void MedialAxisTrans::Initialize(double k) {
 			adjCones[i].insert(adjacentcones[i][j]);
 		}
 	}
+
+	for (int i = 0; i < fN; i++) {
+		compSlabNormal(i);
+		FacesRemained.insert(i);
+	}
+
+	for (int i = 0; i < cN; i++) {
+		ConesRemained.insert(i);
+	}
+
 	//minimize the SQE function of each edge to find the contraction target m_g and coresponding SQE
 	// initialize the stability ratio for each edge and cost
 	int numEdge = edges.size();
@@ -497,9 +523,9 @@ void MedialAxisTrans::connectCone2Target(const cone_id &co, const vertex_id &v0,
 		edgelist.push_back(eid);
 	}
 }
-int MedialAxisTrans::Contraction(int sigma, double k) {
+int MedialAxisTrans::Contraction(int MaximalIte, double k) {
 	int iterations = 0;
-	while (!prioQue.empty() && iterations < sigma)
+	while (!prioQue.empty() && iterations < MaximalIte)
 	{
 		EdgeIdCost eij = prioQue.top();
 		prioQue.pop();

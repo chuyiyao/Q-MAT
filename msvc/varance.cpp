@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 {
 	MedialAxisTrans MAT;
 	vertex_id v0 = MAT.add_vertex(Point(0, 0, 0));
-	vertex_id v1 = MAT.add_vertex(Point(1, 0, 0));
-	vertex_id v2 = MAT.add_vertex(Point(1, 1, 0));
+	vertex_id v1 = MAT.add_vertex(Point(2, 0, 0));
+	vertex_id v2 = MAT.add_vertex(Point(2, 3, 0));
 	vertex_id v3 = MAT.add_vertex(Point(0, 1, 1));
 	vertex_id v4 = MAT.add_vertex(Point(-1, 0, 0));
 	vertex_id v5 = MAT.add_vertex(Point(0, 0, 1));
@@ -55,8 +55,11 @@ int main(int argc, char *argv[])
 
 	double k = 1e-5;
 	MAT.Initialize(k);
-	MAT.need_tstrips();
-	MAT.need_normals();
+
+	for (int i = 0; i < MAT.vN; i++)
+	{
+		std::cout << MAT.vertices[i] << std::endl;
+	}
 
 	//for (auto i = 0; i < MAT.vertices.size(); i++) {
 	//	std::cout << MAT.attributes[i].radius << std::endl;

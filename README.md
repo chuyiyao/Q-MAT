@@ -5,7 +5,6 @@ This is a C++ implementation of the 2016 siggraph paper *"Q-MAT: Computing Media
 
 # Basic Programming Frame
 
-![ProgramFrame](https://github.com/chuyiyao/Q-MAT/blob/master/Images/program_frame.png)
 ![ProgramFrame_eng](https://github.com/chuyiyao/Q-MAT/blob/master/Images/frame_eng.png)
 
 At first I intend to use the library *CGAL* as the basic Mesh data structure for its *halfedge* structure, which speeds up the processing of find every adjacent face of a vertex. However, it turns out that this kind of structure only suits the surface mesh(manifold). The initial Medial Axis Transform is much more complex for there could be non-manifold edges and vertices, like edges shared by three or more triangle meshes or edges not belonging to any triangle mesh. 

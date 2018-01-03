@@ -59,6 +59,9 @@ public:
 		bool isManifold = true;
 	};
 
+	int vN = 0;
+	int fN = 0;
+	int cN = 0;
 	std::vector<Edge> edges;
 	std::vector<Cone> cones;
 	std::vector<VertexAttrib> vAttributes;
@@ -87,6 +90,7 @@ public:
 	std::set<cone_id> ConesRemained;
 //	std::set<edge_id> EdgesRemained;  //seem useless
 
+
 	std::vector<std::set<int> > adjFaces;
 	std::vector<std::set<int> > adjCones;
 	std::vector<std::set<int> > adjVertices;
@@ -97,6 +101,7 @@ public:
 	cone_id add_cone(vertex_id i, vertex_id j);
 	
 	void need_VertexAttributes();
+	void need_normalize();
 	double compStability(const edge_id &e);
 
 	MedialAxisTrans() : TriMesh() { };

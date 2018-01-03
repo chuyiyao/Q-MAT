@@ -70,7 +70,7 @@ init(MedialAxisTrans &MAT)
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 
 	MatrixID = glGetUniformLocation(programID, "MVP");
 	VID = glGetUniformLocation(programID, "V");

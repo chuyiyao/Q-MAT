@@ -9,9 +9,15 @@
 //#include 
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <glm\gtc\quaternion.hpp>
+#include <glm\gtx\quaternion.hpp>
+#include <glm\gtx\euler_angles.hpp>
+#include <glm\gtx\norm.hpp>
 using namespace glm;
 #include "controls.hpp"
+#include "quaternion_utils.hpp"
 
+#include <AntTweakBar.h>
 
 
 enum Attrib_IDs { vPosition = 0 };
@@ -22,6 +28,12 @@ GLuint elementbuffer[2];
 
 GLuint NumVertices;
 GLuint NumFaces;
+
+vec3 gPosition(1.5f, 0.0f, 0.0f);
+quat gOrientation;
+
+bool gLookAtOther = true;
+
 //----------------------------------------------------------------------------
 //
 // init
@@ -41,6 +53,10 @@ init(MedialAxisTrans &MAT)
 	NumVertices = MAT.vertices.size();
 	NumFaces = MAT.faces.size();
 
+	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	//glEnable(GL_CULL_FACE);
 
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -68,9 +84,6 @@ init(MedialAxisTrans &MAT)
 	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(vPosition);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	//glEnable(GL_CULL_FACE);
 
 	MatrixID = glGetUniformLocation(programID, "MVP");
 	VID = glGetUniformLocation(programID, "V");

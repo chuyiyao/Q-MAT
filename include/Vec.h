@@ -315,7 +315,7 @@ public:
 typedef Vec<3,float> vec;
 typedef Vec<3,float> point;
 typedef Vec<2,float> vec2;
-typedef Vec<3,float> vec3;
+//typedef Vec<3,float> vec3;
 typedef Vec<4,float> vec4;
 typedef Vec<2,int> ivec2;
 typedef Vec<3,int> ivec3;

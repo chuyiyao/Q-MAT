@@ -10,6 +10,7 @@
 #include <GLFW\glfw3.h>
 #include "shader.hpp"
 #include "SLrendering.h"
+
 typedef Vec<3, float> Point;
 GLFWwindow* window;
 
@@ -20,12 +21,7 @@ GLFWwindow* window;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
 // Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
-
-// Shaders
-
-
-
+const GLuint WIDTH = 1024, HEIGHT = 768;
 
 
 int main(int argc, char *argv[])
@@ -84,7 +80,12 @@ int main(int argc, char *argv[])
 	//std::cout<< "Voxel time:%10.5f\n" << iter_f <<std::endl;
 
 	// Init GLFW
-	glfwInit();
+	if (!glfwInit())
+	{
+		fprintf(stderr, "Failed to initialize GLFW\n");
+		getchar();
+		return -1;
+	}
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -93,8 +94,25 @@ int main(int argc, char *argv[])
 	glfwMakeContextCurrent(window);
 	glfwSetKeyCallback(window, key_callback);
 	glewExperimental = GL_TRUE;
-	// Initialize GLEW to setup the OpenGL Function pointers
-	glewInit();
+	if (glewInit() != GLEW_OK) {
+		fprintf(stderr, "Failed to initialize GLEW\n");
+		getchar();
+		glfwTerminate();
+		return -1;
+	}
+	TwInit(TW_OPENGL_CORE, NULL);
+	TwWindowSize(WIDTH, HEIGHT);
+	TwBar * QuaternionGUI = TwNewBar("Quaternion settings");
+	TwSetParam(QuaternionGUI, NULL, "position", TW_PARAM_CSTRING, 1, "808 16");
+	TwAddVarRW(QuaternionGUI, "Quaternion", TW_TYPE_QUAT4F, &gOrientation, "showval=true open=true ");
+	TwAddVarRW(QuaternionGUI, "Use LookAt", TW_TYPE_BOOL8, &gLookAtOther, "help='Look at the other monkey ?'");
+	// Set GLFW event callbacks. I removed glfwSetWindowSizeCallback for conciseness
+	glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
+	//glfwSetCursorPosCallback(window, (GLFWcursorposfun)TwEventMousePosGLFW);          // - Directly redirect GLFW mouse position events to AntTweakBar
+	//glfwSetScrollCallback(window, (GLFWscrollfun)TwEventMouseWheelGLFW);    // - Directly redirect GLFW mouse wheel events to AntTweakBar
+	//glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW);                         // - Directly redirect GLFW key events to AntTweakBar
+	//glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW);
+//	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// Define the viewport dimensions
 	int width, height;

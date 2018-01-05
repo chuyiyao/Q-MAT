@@ -1,9 +1,9 @@
 /*************************************************************************
- * GLFW 3.2 - www.glfw.org
+ * GLFW 3.1 - www.glfw.org
  * A library for OpenGL, window and input
  *------------------------------------------------------------------------
  * Copyright (c) 2002-2006 Marcus Geelnard
- * Copyright (c) 2006-2016 Camilla Berglund <elmindreda@glfw.org>
+ * Copyright (c) 2006-2010 Camilla Berglund <elmindreda@elmindreda.org>
  *
  * This software is provided 'as-is', without any express or implied
  * warranty. In no event will the authors be held liable for any damages
@@ -38,30 +38,20 @@ extern "C" {
  * Doxygen documentation
  *************************************************************************/
 
-/*! @file glfw3native.h
- *  @brief The header of the native access functions.
- *
- *  This is the header file of the native access functions.  See @ref native for
- *  more information.
- */
 /*! @defgroup native Native access
  *
  *  **By using the native access functions you assert that you know what you're
  *  doing and how to fix problems caused by using them.  If you don't, you
  *  shouldn't be using them.**
  *
- *  Before the inclusion of @ref glfw3native.h, you may define exactly one
- *  window system API macro and zero or more context creation API macros.
- *
- *  The chosen backends must match those the library was compiled for.  Failure
- *  to do this will cause a link-time error.
+ *  Before the inclusion of @ref glfw3native.h, you must define exactly one
+ *  window system API macro and exactly one context creation API macro.  Failure
+ *  to do this will cause a compile-time error.
  *
  *  The available window API macros are:
  *  * `GLFW_EXPOSE_NATIVE_WIN32`
  *  * `GLFW_EXPOSE_NATIVE_COCOA`
  *  * `GLFW_EXPOSE_NATIVE_X11`
- *  * `GLFW_EXPOSE_NATIVE_WAYLAND`
- *  * `GLFW_EXPOSE_NATIVE_MIR`
  *
  *  The available context API macros are:
  *  * `GLFW_EXPOSE_NATIVE_WGL`
@@ -96,23 +86,20 @@ extern "C" {
 #elif defined(GLFW_EXPOSE_NATIVE_X11)
  #include <X11/Xlib.h>
  #include <X11/extensions/Xrandr.h>
-#elif defined(GLFW_EXPOSE_NATIVE_WAYLAND)
- #include <wayland-client.h>
-#elif defined(GLFW_EXPOSE_NATIVE_MIR)
- #include <mir_toolkit/mir_client_library.h>
+#else
+ #error "No window API selected"
 #endif
 
 #if defined(GLFW_EXPOSE_NATIVE_WGL)
  /* WGL is declared by windows.h */
-#endif
-#if defined(GLFW_EXPOSE_NATIVE_NSGL)
+#elif defined(GLFW_EXPOSE_NATIVE_NSGL)
  /* NSGL is declared by Cocoa.h */
-#endif
-#if defined(GLFW_EXPOSE_NATIVE_GLX)
+#elif defined(GLFW_EXPOSE_NATIVE_GLX)
  #include <GL/glx.h>
-#endif
-#if defined(GLFW_EXPOSE_NATIVE_EGL)
+#elif defined(GLFW_EXPOSE_NATIVE_EGL)
  #include <EGL/egl.h>
+#else
+ #error "No context API selected"
 #endif
 
 
@@ -127,10 +114,11 @@ extern "C" {
  *  of the specified monitor, or `NULL` if an [error](@ref error_handling)
  *  occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.1.
+ *  @par History
+ *  Added in GLFW 3.1.
  *
  *  @ingroup native
  */
@@ -142,10 +130,11 @@ GLFWAPI const char* glfwGetWin32Adapter(GLFWmonitor* monitor);
  *  `\\.\DISPLAY1\Monitor0`) of the specified monitor, or `NULL` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.1.
+ *  @par History
+ *  Added in GLFW 3.1.
  *
  *  @ingroup native
  */
@@ -156,10 +145,11 @@ GLFWAPI const char* glfwGetWin32Monitor(GLFWmonitor* monitor);
  *  @return The `HWND` of the specified window, or `NULL` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -172,10 +162,11 @@ GLFWAPI HWND glfwGetWin32Window(GLFWwindow* window);
  *  @return The `HGLRC` of the specified window, or `NULL` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -188,10 +179,11 @@ GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* window);
  *  @return The `CGDirectDisplayID` of the specified monitor, or
  *  `kCGNullDirectDisplay` if an [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.1.
+ *  @par History
+ *  Added in GLFW 3.1.
  *
  *  @ingroup native
  */
@@ -202,10 +194,11 @@ GLFWAPI CGDirectDisplayID glfwGetCocoaMonitor(GLFWmonitor* monitor);
  *  @return The `NSWindow` of the specified window, or `nil` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -218,10 +211,11 @@ GLFWAPI id glfwGetCocoaWindow(GLFWwindow* window);
  *  @return The `NSOpenGLContext` of the specified window, or `nil` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -234,10 +228,11 @@ GLFWAPI id glfwGetNSGLContext(GLFWwindow* window);
  *  @return The `Display` used by GLFW, or `NULL` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -248,10 +243,11 @@ GLFWAPI Display* glfwGetX11Display(void);
  *  @return The `RRCrtc` of the specified monitor, or `None` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.1.
+ *  @par History
+ *  Added in GLFW 3.1.
  *
  *  @ingroup native
  */
@@ -262,10 +258,11 @@ GLFWAPI RRCrtc glfwGetX11Adapter(GLFWmonitor* monitor);
  *  @return The `RROutput` of the specified monitor, or `None` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.1.
+ *  @par History
+ *  Added in GLFW 3.1.
  *
  *  @ingroup native
  */
@@ -276,10 +273,11 @@ GLFWAPI RROutput glfwGetX11Monitor(GLFWmonitor* monitor);
  *  @return The `Window` of the specified window, or `None` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -292,116 +290,15 @@ GLFWAPI Window glfwGetX11Window(GLFWwindow* window);
  *  @return The `GLXContext` of the specified window, or `NULL` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
 GLFWAPI GLXContext glfwGetGLXContext(GLFWwindow* window);
-
-/*! @brief Returns the `GLXWindow` of the specified window.
- *
- *  @return The `GLXWindow` of the specified window, or `None` if an
- *  [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI GLXWindow glfwGetGLXWindow(GLFWwindow* window);
-#endif
-
-#if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
-/*! @brief Returns the `struct wl_display*` used by GLFW.
- *
- *  @return The `struct wl_display*` used by GLFW, or `NULL` if an
- *  [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI struct wl_display* glfwGetWaylandDisplay(void);
-
-/*! @brief Returns the `struct wl_output*` of the specified monitor.
- *
- *  @return The `struct wl_output*` of the specified monitor, or `NULL` if an
- *  [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI struct wl_output* glfwGetWaylandMonitor(GLFWmonitor* monitor);
-
-/*! @brief Returns the main `struct wl_surface*` of the specified window.
- *
- *  @return The main `struct wl_surface*` of the specified window, or `NULL` if
- *  an [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI struct wl_surface* glfwGetWaylandWindow(GLFWwindow* window);
-#endif
-
-#if defined(GLFW_EXPOSE_NATIVE_MIR)
-/*! @brief Returns the `MirConnection*` used by GLFW.
- *
- *  @return The `MirConnection*` used by GLFW, or `NULL` if an
- *  [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI MirConnection* glfwGetMirDisplay(void);
-
-/*! @brief Returns the Mir output ID of the specified monitor.
- *
- *  @return The Mir output ID of the specified monitor, or zero if an
- *  [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI int glfwGetMirMonitor(GLFWmonitor* monitor);
-
-/*! @brief Returns the `MirSurface*` of the specified window.
- *
- *  @return The `MirSurface*` of the specified window, or `NULL` if an
- *  [error](@ref error_handling) occurred.
- *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
- *
- *  @since Added in version 3.2.
- *
- *  @ingroup native
- */
-GLFWAPI MirSurface* glfwGetMirWindow(GLFWwindow* window);
 #endif
 
 #if defined(GLFW_EXPOSE_NATIVE_EGL)
@@ -410,10 +307,11 @@ GLFWAPI MirSurface* glfwGetMirWindow(GLFWwindow* window);
  *  @return The `EGLDisplay` used by GLFW, or `EGL_NO_DISPLAY` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -424,10 +322,11 @@ GLFWAPI EGLDisplay glfwGetEGLDisplay(void);
  *  @return The `EGLContext` of the specified window, or `EGL_NO_CONTEXT` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */
@@ -438,10 +337,11 @@ GLFWAPI EGLContext glfwGetEGLContext(GLFWwindow* window);
  *  @return The `EGLSurface` of the specified window, or `EGL_NO_SURFACE` if an
  *  [error](@ref error_handling) occurred.
  *
- *  @thread_safety This function may be called from any thread.  Access is not
- *  synchronized.
+ *  @par Thread Safety
+ *  This function may be called from any thread.  Access is not synchronized.
  *
- *  @since Added in version 3.0.
+ *  @par History
+ *  Added in GLFW 3.0.
  *
  *  @ingroup native
  */

@@ -90,13 +90,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;TW_STATIC;TW_NO_LIB_PRAGMA;TW_NO_DIRECT3D;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>trimeshd.lib;opengl32.lib;glfw3.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;trimeshd.lib;opengl32.lib;glfw3.lib;GLEW_1130.lib;ANTTWEAKBAR_116_OGLCORE_GLFW.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -154,6 +154,7 @@
     <ClInclude Include="controls.hpp" />
     <ClInclude Include="io.h" />
     <ClInclude Include="matrix.h" />
+    <ClInclude Include="quaternion_utils.hpp" />
     <ClInclude Include="SLrendering.h" />
     <ClInclude Include="shader.hpp" />
     <ClInclude Include="specializedMesh.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="controls.cpp" />
     <ClCompile Include="io.cpp" />
     <ClCompile Include="matrix.cpp" />
+    <ClCompile Include="quaternion_utils.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="specializedMesh.cpp" />
     <ClCompile Include="varance.cpp" />

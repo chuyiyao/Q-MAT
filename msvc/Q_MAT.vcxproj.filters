@@ -33,6 +33,9 @@
     <ClInclude Include="SLrendering.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="quaternion_utils.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="varance.cpp">
@@ -51,6 +54,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="matrix.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="quaternion_utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

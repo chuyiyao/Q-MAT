@@ -100,7 +100,7 @@ quat RotateTowards(quat q1, quat q2, float maxAngle){
 	
 	float angle = acos(cosTheta);
 	
-	// If there is only a 2° difference, and we are allowed 5°,
+	// If there is only a 2?difference, and we are allowed 5?
 	// then we arrived.
 	if (angle < maxAngle){
 		return q2;
@@ -145,7 +145,7 @@ void tests(){
 	glm::vec3 Zneg( 0.0f,  0.0f, -1.0f);
 	
 	// Testing standard, easy case
-	// Must be 90° rotation on X : 0.7 0 0 0.7
+	// Must be 90?rotation on X : 0.7 0 0 0.7
 	quat X90rot = RotationBetweenVectors(Ypos, Zpos);
 	
 	// Testing with v1 = v2
@@ -153,11 +153,11 @@ void tests(){
 	quat id = RotationBetweenVectors(Xpos, Xpos);
 	
 	// Testing with v1 = -v2
-	// Must be 180° on +/-Y axis : 0 +/-1 0 0
+	// Must be 180?on +/-Y axis : 0 +/-1 0 0
 	quat Y180rot = RotationBetweenVectors(Xpos, Xneg);
 	
 	// Testing with v1 = -v2, but with a "bad first guess"
-	// Must be 180° on +/-Y axis : 0 +/-1 0 0
+	// Must be 180?on +/-Y axis : 0 +/-1 0 0
 	quat X180rot = RotationBetweenVectors(Zpos, Zneg);
 	
 

@@ -96,7 +96,6 @@ void MedialAxisTrans::need_normalize() {
 	int indx = 0;
 	float dimLength = bbox.size().max();	
 	Point cen = bbox.center();
-	std::cout << cen << std::endl;
 	for (int i = 0; i < vertices.size(); i++)
 	{
 		vertices[i] = 2.0f * (vertices[i] - cen) / dimLength;

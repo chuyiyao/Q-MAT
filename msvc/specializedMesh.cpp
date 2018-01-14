@@ -92,6 +92,7 @@ void MedialAxisTrans::need_VertexAttributes() {
 
 void MedialAxisTrans::need_normalize() {
 	if (bbox.max.max() <= 1.0f && bbox.min.min() >= -1.0f)
+		printf("No need to normalize.....\n");
 		return;
 	int indx = 0;
 	float dimLength = bbox.size().max();	
@@ -100,6 +101,7 @@ void MedialAxisTrans::need_normalize() {
 	{
 		vertices[i] = 2.0f * (vertices[i] - cen) / dimLength;
 	}
+	printf("Normalization.....Done\n");
 	need_bbox();
 }
 
@@ -111,7 +113,10 @@ double MedialAxisTrans::compStability(const edge_id &e){
 	double r_res = abs(r1 - r2);
 	double c_res = dist(p1, p2);
 	double res = c_res - r_res;
-	return (res > 0 ? res/c_res : 0);
+	double stab = res > 0 ? res / c_res : 0;
+	printf("dist: %f:, r_res: %f, sta: %f\n",c_res,r1, stab);
+
+	return stab;
 }
 
 void MedialAxisTrans::compSlabNormal(const face_id& fid) {
@@ -143,14 +148,20 @@ void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL:
 	ICPL::Matrix & n1rot, ICPL::Matrix & n2rot) {
 	vec normal1, normal2;
 	vec p1 = vertices[cones[co][0]] - vertices[cones[co][1]];
+
 	vec p2;
-	if (p1[0] == 0 && p1[1] == 0)
+	/*if (p1[0] == 0 && p1[1] == 0)
 		p2 = p1 CROSS(p1 + vec(1, 0, 0));
 	else
 		p2 = p1 CROSS(p1 + vec(0, 0, 1));
+	std::cout << p2 << std::endl;*/
+
+	//only suits to situation where v_0 and v_1 both are not (1,1,1);
+	p2 = (vertices[cones[co][0]] - point(1,1,1))CROSS (vertices[cones[co][1]]-point(1,1,1));
+
 	double b1 = vAttributes[cones[co][0]].radius - vAttributes[cones[co][1]].radius;
-	double b2 = p2 CROSS vertices[cones[co][0]] - p2 DOT vertices[cones[co][0]];
-	p2 *= vAttributes[cones[co][0]].radius;
+	double b2 = 0;//p2 CROSS vertices[cones[co][0]] - p2 DOT vertices[cones[co][0]];
+	//p2 *= vAttributes[cones[co][0]].radius;
 	
 	double detZ = p1[0] * p2[1] - p2[0] * p1[1];
 	double detY = p1[0] * p2[2] - p2[0] * p1[2];
@@ -181,6 +192,7 @@ void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL:
 	n1rot.val[2][0] = normal1rot[2]; n1rot.val[3][0] = 1.0;
 	n2rot.val[0][0] = normal2rot[0]; n2rot.val[1][0] = normal2rot[1];
 	n2rot.val[2][0] = normal2rot[2]; n2rot.val[3][0] = 1.0;
+	std::cout << n1 << std::endl;
 }
 
 
@@ -301,6 +313,8 @@ double MedialAxisTrans::compContractionTarget(const edge_id &e) {
 		return ch;
 	}
 }
+
+//In the contraction processs, compute target point according to the error to remained slabs and cones
 double MedialAxisTrans::NewlyCompContractionTarget(const edge_id &e) {
 	ICPL::Matrix A = ICPL::Matrix::zeros(4, 4);
 	ICPL::Matrix b = ICPL::Matrix::zeros(4, 1);
@@ -527,9 +541,10 @@ int MedialAxisTrans::Contraction(int MaximalIte, double k) {
 	while (!prioQue.empty() && iterations < MaximalIte)
 	{
 		EdgeIdCost eij = prioQue.top();
-		prioQue.pop();
 		int v0 = edges[eij.id][0];
 		int v1 = edges[eij.id][1];
+		prioQue.pop();
+
 		if (!vAttributes[v0].isvalid || !vAttributes[v1].isvalid)
 			continue;
 		//if (!topologyCheck())
@@ -577,6 +592,138 @@ int MedialAxisTrans::Contraction(int MaximalIte, double k) {
 	return iterations;
 }
 
+void MedialAxisTrans::read_ma(const char *filename, MedialAxisTrans &mesh){	
+	FILE * file = fopen(filename, "rb");
+	if (!file)
+	{
+		printf(".MA file could not be opened\n");
+		return;
+	}
+	int nv = 0, ne = 0, nf = 0;
+	fscanf(file, "%d %d %d\n", &nv, &ne, &nf);
+
+	mesh.vertices.resize(nv);
+	mesh.vAttributes.resize(nv);
+	mesh.adjacentfaces.resize(nv);
+	mesh.adjacentcones.resize(nv);
+	mesh.adjacentedges.resize(nv);
+	mesh.neighbors.resize(nv);
+	mesh.adjVertices.resize(nv);
+	mesh.adjFaces.resize(nv);
+	mesh.adjCones.resize(nv);
+
+	mesh.edges.resize(ne);
+	mesh.eAttributes.resize(ne);
+
+	mesh.faces.resize(nf);
+	mesh.slabNormal1.resize(nf);
+	mesh.slabNormal2.resize(nf);
+
+	printf("Starting to read .MA file: %d vertices, %d edges, %d faces.....\n", nv, ne, nf);
+	for (int i = 0; i < nv; i++)
+	{
+		char lineHeader[128];
+		int res = fscanf(file, "%s", lineHeader);
+		float r;
+		if (strcmp(lineHeader, "v") == 0) {
+			fscanf(file, "%f %f %f %f\n", &mesh.vertices[i][0], &mesh.vertices[i][1], 
+				&mesh.vertices[i][2], &mesh.vAttributes[i].radius);
+		}
+		else
+		{
+			printf("Error in reading vertices....\n");
+			return;
+		}
+	}
+	for (int i = 0; i < ne; i++)
+	{
+		char lineHeader[128];
+		int res = fscanf(file, "%s", lineHeader);
+		if (strcmp(lineHeader, "e") == 0) {
+			int v0, v1;
+			fscanf(file, "%d %d\n", &v0, &v1);
+			bool repeat = false;
+			for (int j = 0; j < mesh.neighbors[v0].size(); j++)
+			{
+				if (mesh.neighbors[v0][j] == v1)
+				{
+					repeat = true;
+				}
+			}
+			if (repeat)
+			{
+				printf("Error in reading: repetitive edge v%d ---- v%d!\n", v0, v1);
+				continue;
+			}
+			mesh.edges[i][0] = v0;
+			mesh.edges[i][1] = v1;
+			mesh.adjacentedges[v0].push_back(i);
+			mesh.adjacentedges[v1].push_back(i);
+			mesh.neighbors[v0].push_back(v1);
+			mesh.neighbors[v1].push_back(v0);
+		}
+		else
+		{
+			printf("Error in reading edges....\n");
+			return;
+		}
+	}
+	for (int i = 0; i < nf; i++)
+	{
+		char lineHeader[128];
+		int res = fscanf(file, "%s", lineHeader);
+		if (strcmp(lineHeader, "f") == 0) {
+			Face fac;
+			fscanf(file, "%d %d %d\n", &fac[0], &fac[1], &fac[2]);
+			mesh.faces[i][0] = fac[0];
+			mesh.faces[i][1] = fac[1];
+			mesh.faces[i][2] = fac[2];
+			for (int j = 0; j < mesh.adjacentedges[fac[0]].size(); j++)
+			{
+				int eid = mesh.adjacentedges[fac[0]][j];
+				if (mesh.edges[eid][0] == fac[1] || mesh.edges[eid][1] == fac[1]
+					|| mesh.edges[eid][0] == fac[2] || mesh.edges[eid][1] == fac[2])
+				{
+					mesh.eAttributes[eid].isManifold = true;
+				}
+			}
+			for (int j = 0; j < mesh.adjacentedges[fac[1]].size(); j++)
+			{
+				int eid = mesh.adjacentedges[fac[1]][j];
+				if ( mesh.edges[eid][0] == fac[2] || mesh.edges[eid][1] == fac[2])
+				{
+					mesh.eAttributes[eid].isManifold = true;
+				}
+			}
+			mesh.adjacentfaces[fac[0]].push_back(i);
+			mesh.adjacentfaces[fac[1]].push_back(i);
+			mesh.adjacentfaces[fac[2]].push_back(i);
+		}
+		else
+		{
+			printf("Error in reading faces....\n");
+			return;
+		}
+	}
+	for (int i = 0; i < ne; i++)
+	{
+		if (mesh.eAttributes[i].isManifold == false) {
+			Cone co;
+			co[0] = mesh.edges[i][0];
+			co[1] = mesh.edges[i][1];
+			mesh.cones.push_back(co);
+			int cid = mesh.cones.size() - 1;
+			mesh.adjacentcones[co[0]].push_back(cid);
+			mesh.adjacentcones[co[1]].push_back(cid);
+		}
+	}
+	printf("Reading .ma file.....Done.\n\n");
+	return;
+}
+
+bool write(const char *filename) {
+	return true;
+}
 
 //prepare for rendering(compute indexed vertices and corresponding normals)
 bool is_near(float v1, float v2) {

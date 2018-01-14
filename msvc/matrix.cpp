@@ -883,4 +883,25 @@ double Matrix::pythag(double a,double b) {
   else
     return (absb == 0.0 ? 0.0 : absb*sqrt(1.0+SQR(absa/absb)));
 }
+
+
+
+}
+
+ostream &operator << (ostream &os, const ICPL::Matrix &Ma) {
+	os << "[ ";
+	for (int i = 0; i < Ma.m-1; i++)
+	{
+		for (int j = 0; j < Ma.n; j++)
+		{
+			os << Ma.val[i][j] << " ";
+		}
+		os << "\n";
+	}
+	for (int j = 0; j < Ma.n; j++)
+	{
+		os << Ma.val[Ma.m-1][j] << " ";
+	}
+	os <<  " ]\n";
+	return os;
 }

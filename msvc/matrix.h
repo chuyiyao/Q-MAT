@@ -123,5 +123,10 @@ private:
   inline double pythag(double a,double b);
 
 };
+
 }
+
+std::ostream &operator << (std::ostream &os, const ICPL::Matrix &Ma);
+
+
 #endif // MATRIX_H

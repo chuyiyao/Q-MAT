@@ -45,7 +45,7 @@ private:
 
 public:
 	struct VertexAttrib {
-		double radius;
+		float radius;
 		bool isvalid = true;
 		VertexAttrib(): radius(1){}
 		VertexAttrib(double r) : radius(r) {}
@@ -56,7 +56,7 @@ public:
 		double r_g = 0;
 		double cost = 0;
 		double stability = 0;
-		bool isManifold = true;
+		bool isManifold = false;
 	};
 
 	int vN = 0;
@@ -69,6 +69,7 @@ public:
 	std::vector<vec> slabNormal1;
 	std::vector<vec> slabNormal2;
 	std::vector<std::vector<cone_id> > adjacentcones;
+	std::vector<std::vector<edge_id> > adjacentedges;
 
 	struct EdgeIdCost {
 		edge_id id;
@@ -123,7 +124,8 @@ public:
 	//for rendering 
 	//void indexVBO_V_vN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);
 	//void indexVBO_V_fN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);
-
+	static void read_ma(const char *filename, MedialAxisTrans &mesh);
+	bool write(const char *filename);
 };
 
 void solveNormalEq(const vec &p1, const vec &p2, const double &b1,

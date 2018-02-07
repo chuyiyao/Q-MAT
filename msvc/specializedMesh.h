@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include <queue>
 #include <set>
+#define MAXVALUE 99999
 
 typedef Vec<3, float> Point;
 typedef int vertex_id;
@@ -70,6 +71,8 @@ public:
 	std::vector<vec> slabNormal2;
 	std::vector<std::vector<cone_id> > adjacentcones;
 	std::vector<std::vector<edge_id> > adjacentedges;
+	int abnormalSlabNum = 0;
+	int ignoredvalue = 0;
 
 	struct EdgeIdCost {
 		edge_id id;
@@ -89,8 +92,13 @@ public:
 	std::set<vertex_id> VerticesRemained;
 	std::set<face_id> FacesRemained;
 	std::set<cone_id> ConesRemained;
-//	std::set<edge_id> EdgesRemained;  //seem useless
+	//std::set<edge_id> EdgesRemained;  //seem useless
 
+	// connectivity after contraction
+	std::vector<Face> faces_c;
+	std::vector<Cone> cones_c;
+	std::vector<Edge> edges_c;
+	void produce_contracted_connectivity();
 
 	std::vector<std::set<int> > adjFaces;
 	std::vector<std::set<int> > adjCones;
@@ -107,7 +115,7 @@ public:
 
 	MedialAxisTrans() : TriMesh() { };
 	//~MedialSurface();
-	void compSlabNormal(const face_id &fid);
+	bool compSlabNormal(const face_id &fid); // bool return whether the delta is not negative
 	void compConeNormal(const cone_id &co, ICPL::Matrix &n1, ICPL::Matrix &n2, ICPL::Matrix &n1rot, ICPL::Matrix &n2rot);
 	
 	void addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve);
@@ -126,9 +134,10 @@ public:
 	//void indexVBO_V_fN(std::vector<unsigned short> &ind,std::vector<point> &outV, std::vector<vec> &outN);
 	static void read_ma(const char *filename, MedialAxisTrans &mesh);
 	bool write(const char *filename);
+	void projection();
 };
 
-void solveNormalEq(const vec &p1, const vec &p2, const double &b1,
+bool solveNormalEq(const vec &p1, const vec &p2, const double &b1,
 	const double &b2, vec &n1, vec &n2);
 
 void swapComponent(point &p, int i, int j);

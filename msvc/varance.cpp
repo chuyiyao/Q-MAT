@@ -50,40 +50,77 @@ int main(int argc, char *argv[])
 	MAT.vAttributes[v2].radius = 0.5;
 	MAT.vAttributes[v3].radius = 0.5;*/
 
-	MedialAxisTrans::read_ma("Data/dolphin.ma", MAT);
+	MedialAxisTrans::read_ma("Data/chair.ma", MAT);
 	//MedialAxisTrans::read_ma("Data/testfile.ma", MAT);
 
 	double k = 1e-5;
 	MAT.Initialize(k);
+	int fiddd = 83999;
 
-	for (int i = 0; i < MAT.vN; i++)
-	{
-		std::cout << MAT.vAttributes[i].radius << std::endl;
-	}
 
-	//for (auto i = 0; i < MAT.vertices.size(); i++) {
-	//	std::cout << MAT.attributes[i].radius << std::endl;
+
+	//for (int i = 0; i < 3; i++)
+	//{	
+	//	std::cout << "v:"<< MAT.faces[fiddd][i] << MAT.vertices[MAT.faces[fiddd][i]] << " r: " <<
+	//		MAT.vAttributes[MAT.faces[fiddd][i]].radius << std::endl;
+	//	fprintf(fp, "%g %g %g %g\n", MAT.vertices[MAT.faces[fiddd][i]][0], MAT.vertices[MAT.faces[fiddd][i]][1],
+	//		MAT.vertices[MAT.faces[fiddd][i]][2], MAT.vAttributes[MAT.faces[fiddd][i]].radius);
 	//}
-	std::cout << "v_num " << MAT.vertices.size() << "  f_num " << MAT.faces.size() <<
-		"  c_num " << MAT.cones.size() << "  e_num " << MAT.edges.size() << std::endl;
+	//std::cout << fiddd << "  " << MAT.slabNormal1[fiddd] << MAT.slabNormal2[fiddd] << std::endl;
 
-	//for (auto i = MAT.edges.begin(); i != MAT.edges.end(); i++)
-	//	std::cout << *i << "  " << (*i).stability << std::endl;
-
-	for (int i = 0; i < MAT.faces.size(); i++) {
-		std::cout<< MAT.faces[i] << MAT.slabNormal1[i] << MAT.slabNormal2[i] << std::endl;
+	/*FILE* fp = fopen("slabnormalNoX.txt", "w+");
+	for (int i = 0; i < MAT.fN; i++)
+	{
+		fprintf(fp, "%d (%d %d %d)\n       (%f %f %f) (%f %f %f)\n", i, MAT.faces[i][0], MAT.faces[i][1], MAT.faces[i][2],
+			MAT.slabNormal1[i][0], MAT.slabNormal1[i][1], MAT.slabNormal1[i][2],
+			MAT.slabNormal2[i][0], MAT.slabNormal2[i][1], MAT.slabNormal2[i][2]);
 	}
+	fclose(fp);*/
 
-	for (int i = 0; i < MAT.eAttributes.size(); i++) {
-		std::cout << MAT.edges[i] <<  "    stability: " << MAT.eAttributes[i].stability << std::endl;
-		std::cout  << "cost:"<< MAT.eAttributes[i].cost <<" c_g:"  << MAT.eAttributes[i].c_g << std::endl;
-	}
-
+	//int abv = 52529;
+	//for (int i = 0; i < MAT.adjacentfaces[abv].size(); i++)
+	//{
+	//	int fidd = MAT.adjacentfaces[abv][i];
+	//	std::cout << fidd << "  " <<MAT.slabNormal1[fidd] << MAT.slabNormal2[fidd] << std::endl;
+	//}
+	//printf("\n");
+	/*FILE* file = fopen("edgecost.txt", "w+");
 	while (!MAT.prioQue.empty())
 	{
-		std::cout<<"edge: " << MAT.prioQue.top().id << " with cost:"<< MAT.prioQue.top().mcost << std::endl;
+		int eid = MAT.prioQue.top().id;
+		fprintf(file, "%d %d %d %g\n", eid, MAT.edges[eid][0], MAT.edges[eid][1], MAT.prioQue.top().mcost);
 		MAT.prioQue.pop();
 	}
+	fclose(file);*/
+	//
+	//for (int i = 0; i < MAT.vN; i++)
+	//{
+	//	std::cout << MAT.vAttributes[i].radius << std::endl;
+	//}
+
+	////for (auto i = 0; i < MAT.vertices.size(); i++) {
+	////	std::cout << MAT.attributes[i].radius << std::endl;
+	////}
+	//std::cout << "v_num " << MAT.vertices.size() << "  f_num " << MAT.faces.size() <<
+	//	"  c_num " << MAT.cones.size() << "  e_num " << MAT.edges.size() << std::endl;
+
+	////for (auto i = MAT.edges.begin(); i != MAT.edges.end(); i++)
+	////	std::cout << *i << "  " << (*i).stability << std::endl;
+
+	//for (int i = 0; i < MAT.faces.size(); i++) {
+	//	std::cout<< MAT.faces[i] << MAT.slabNormal1[i] << MAT.slabNormal2[i] << std::endl;
+	//}
+
+	//for (int i = 0; i < MAT.eAttributes.size(); i++) {
+	//	std::cout << MAT.edges[i] <<  "    stability: " << MAT.eAttributes[i].stability << std::endl;
+	//	std::cout  << "cost:"<< MAT.eAttributes[i].cost <<" c_g:"  << MAT.eAttributes[i].c_g << std::endl;
+	//}
+
+	//while (!MAT.prioQue.empty())
+	//{
+	//	std::cout<<"edge: " << MAT.prioQue.top().id << " with cost:"<< MAT.prioQue.top().mcost << std::endl;
+	//	MAT.prioQue.pop();
+	//}
 	//::QueryPerformanceFrequency(&freq);
 	//::QueryPerformanceCounter(&time1);
 
@@ -124,7 +161,7 @@ int main(int argc, char *argv[])
 	TwAddVarRW(QuaternionGUI, "Zoom", TW_TYPE_FLOAT, &Zoom,
 		" min=0.01 max=2.5 step=0.01 keyIncr=z keyDecr=Z help='Scale the object (1=original size).' ");
 	TwAddVarRW(QuaternionGUI, "Quaternion", TW_TYPE_QUAT4F, &gOrientation, "showval=true open=true ");
-	TwAddVarRW(QuaternionGUI, "Use LookAt", TW_TYPE_BOOL8, &gLookAtOther, "help='Look at the other monkey ?'");
+	TwAddVarRW(QuaternionGUI, "Contraction", TW_TYPE_BOOL8, &gOriginal, "help='Contracting Outcome ?'");
 	// Set GLFW event callbacks. I removed glfwSetWindowSizeCallback for conciseness
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
@@ -144,9 +181,9 @@ int main(int argc, char *argv[])
 
 	//indexVBO_VN(MAT.vertices, MAT.faces, face_indices, GLvertices, GLnormals);
 
-	printf("start initalize\n\n\n");
+	printf("Initializing rendering \n\n\n");
 	init(MAT);
-	printf("start initalize .....Done\n\n\n");
+	printf("Initializing rendering  ..... Done\n\n\n");
 
 	while (!glfwWindowShouldClose(window))
 	{

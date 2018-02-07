@@ -36,10 +36,11 @@ GLfloat ratio = WIDTH / HEIGHT;
 vec3 gPosition(0.0f, 0.0f, 0.0f);
 quat gOrientation;
 float Zoom = 1.0f;
+
 float MatDiffuse[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
 
-bool gLookAtOther = true;
+bool gOriginal = true;
 
 //----------------------------------------------------------------------------
 //
@@ -187,6 +188,7 @@ display(void)
 
 
 void Release() {
+
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &NormalBuffer);

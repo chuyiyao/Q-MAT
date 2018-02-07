@@ -4,6 +4,9 @@
 #include "Vec.h"
 #include <TriMesh.h>
 
+#include <glm\glm.hpp>
+#include <glm\gtc\matrix_transform.hpp>
+
 std::ostream &operator << (std::ostream &os, const Edge &e) {
 	os << "v" << e[0] << "----v" << e[1];
 	return os;
@@ -114,54 +117,78 @@ double MedialAxisTrans::compStability(const edge_id &e){
 	double c_res = dist(p1, p2);
 	double res = c_res - r_res;
 	double stab = res > 0 ? res / c_res : 0;
-	printf("dist: %f:, r_res: %f, sta: %f\n",c_res,r1, stab);
+	//printf("dist: %f:, r_res: %f, sta: %f\n",c_res,r1, stab);
 
 	return stab;
 }
 
-void MedialAxisTrans::compSlabNormal(const face_id& fid) {
+bool MedialAxisTrans::compSlabNormal(const face_id& fid) {
 	vec p1 = vertices[faces[fid][0]] - vertices[faces[fid][1]];
 	vec p2 = vertices[faces[fid][0]] - vertices[faces[fid][2]];
+	bool jude; // to judge whether the delta of equation is negative 
+					  // and the equation is correctly solved
 	double b1 = vAttributes[faces[fid][0]].radius - vAttributes[faces[fid][1]].radius;
 	double b2 = vAttributes[faces[fid][0]].radius - vAttributes[faces[fid][2]].radius;
 	double detZ = p1[0] * p2[1] - p2[0] * p1[1];
 	double detY = p1[0] * p2[2] - p2[0] * p1[2];
 	double detX = p1[2] * p2[1] - p2[2] * p1[1];
-	if(abs(detZ) > 1e-5)
-		solveNormalEq(p1, p2, b1, b2, slabNormal1[fid], slabNormal2[fid]);
-	else if (abs(detY) > 1e-5) {
+	if (abs(detZ) > 1e-7) {
+		jude = solveNormalEq(p1, p2, b1, b2, slabNormal1[fid], slabNormal2[fid]);
+		if (!jude) {
+			slabNormal1[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+			slabNormal2[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+			abnormalSlabNum++;
+		}
+	}
+	else if (abs(detY) > 1e-7) {
 		swapComponent(p1, 1, 2);
 		swapComponent(p2, 1, 2);
-		solveNormalEq(p1, p2, b1, b2, slabNormal1[fid], slabNormal2[fid]);
-		swapComponent(slabNormal1[fid], 1, 2);
-		swapComponent(slabNormal2[fid], 1, 2);
+		jude = solveNormalEq(p1, p2, b1, b2, slabNormal1[fid], slabNormal2[fid]);
+		if (!jude) {
+			slabNormal1[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+			slabNormal2[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+			abnormalSlabNum++;
+		}
+		else {
+			swapComponent(slabNormal1[fid], 1, 2);
+			swapComponent(slabNormal2[fid], 1, 2);
+		}
+		
 	}
-	else {
+	else  if (abs(detX) > 1e-7) {
 		swapComponent(p1, 0, 2);
 		swapComponent(p2, 0, 2);
-		solveNormalEq(p1, p2, b1, b2, slabNormal1[fid], slabNormal2[fid]);
-		swapComponent(slabNormal1[fid], 0, 2);
-		swapComponent(slabNormal2[fid], 0, 2);
+		jude = solveNormalEq(p1, p2, b1, b2, slabNormal1[fid], slabNormal2[fid]);
+		if (!jude) {
+			slabNormal1[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+			slabNormal2[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+			abnormalSlabNum++;
+		}
+		else {
+			swapComponent(slabNormal1[fid], 0, 2);
+			swapComponent(slabNormal2[fid], 0, 2);
+		}
 	}
+	else{
+		slabNormal1[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+		slabNormal2[fid] = vec(MAXVALUE, MAXVALUE, MAXVALUE);
+		abnormalSlabNum++;
+		jude = false;
+	}
+	
+	return jude;
 }
 void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL::Matrix & n2,
 	ICPL::Matrix & n1rot, ICPL::Matrix & n2rot) {
 	vec normal1, normal2;
 	vec p1 = vertices[cones[co][0]] - vertices[cones[co][1]];
-
 	vec p2;
-	/*if (p1[0] == 0 && p1[1] == 0)
-		p2 = p1 CROSS(p1 + vec(1, 0, 0));
-	else
-		p2 = p1 CROSS(p1 + vec(0, 0, 1));
-	std::cout << p2 << std::endl;*/
 
 	//only suits to situation where v_0 and v_1 both are not (1,1,1);
 	p2 = (vertices[cones[co][0]] - point(1,1,1))CROSS (vertices[cones[co][1]]-point(1,1,1));
 
 	double b1 = vAttributes[cones[co][0]].radius - vAttributes[cones[co][1]].radius;
-	double b2 = 0;//p2 CROSS vertices[cones[co][0]] - p2 DOT vertices[cones[co][0]];
-	//p2 *= vAttributes[cones[co][0]].radius;
+	double b2 = 0;
 	
 	double detZ = p1[0] * p2[1] - p2[0] * p1[1];
 	double detY = p1[0] * p2[2] - p2[0] * p1[2];
@@ -192,13 +219,17 @@ void MedialAxisTrans::compConeNormal(const cone_id& co, ICPL::Matrix & n1, ICPL:
 	n1rot.val[2][0] = normal1rot[2]; n1rot.val[3][0] = 1.0;
 	n2rot.val[0][0] = normal2rot[0]; n2rot.val[1][0] = normal2rot[1];
 	n2rot.val[2][0] = normal2rot[2]; n2rot.val[3][0] = 1.0;
-	std::cout << n1 << std::endl;
 }
 
 
 void MedialAxisTrans::addSlabError(ICPL::Matrix &A, ICPL::Matrix &b, ICPL::Matrix &c, const face_id &fa, const vertex_id &ve) {
 	vec4 n1(slabNormal1[fa][0], slabNormal1[fa][1], slabNormal1[fa][2], 1.0f);
 	vec4 n2(slabNormal2[fa][0], slabNormal2[fa][1], slabNormal2[fa][2], 1.0f);
+	if (n1[0] == MAXVALUE || n2[0] == MAXVALUE )
+	{
+
+		return;
+	}
 	ICPL::Matrix tempA(4, 4);
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -398,44 +429,53 @@ void MedialAxisTrans::Initialize(double k) {
 
 	// Initialize slab normal & intialized the remained id of all vertices,faces,cones
 	
-	for (int i = 0; i < vN; i++) {
+	for (int i = 0; i < vN; ++i) {
 		VerticesRemained.insert(i);
 		int numm = neighbors[i].size();
-		for (int j = 0; j < numm; j++)
+		for (int j = 0; j < numm; ++j)
 		{
 			adjVertices[i].insert(neighbors[i][j]);
 		}
 		numm = adjacentfaces[i].size();
-		for (int j = 0; j < numm; j++)
+		for (int j = 0; j < numm; ++j)
 		{
 			adjFaces[i].insert(adjacentfaces[i][j]);
 		}
 		numm = adjacentcones[i].size();
-		for (int j = 0; j < numm; j++)
+		for (int j = 0; j < numm; ++j)
 		{
 			adjCones[i].insert(adjacentcones[i][j]);
 		}
 	}
 
-	for (int i = 0; i < fN; i++) {
+	std::cout << "Initializing slab normal  ....";
+	for (int i = 0; i < fN; ++i) {
 		compSlabNormal(i);
 		FacesRemained.insert(i);
 	}
-
-	for (int i = 0; i < cN; i++) {
+	std::cout << "Done." << std::endl;
+	std::cout << "The number of abnormal slabs: " << abnormalSlabNum << std::endl;
+	for (int i = 0; i < cN; ++i) {
 		ConesRemained.insert(i);
 	}
 
 	//minimize the SQE function of each edge to find the contraction target m_g and coresponding SQE
 	// initialize the stability ratio for each edge and cost
+	std::cout << "Initializing stability ratio and edge collapse cost ...";
 	int numEdge = edges.size();
-	for (int i = 0; i < numEdge; i++) {
+	for (int i = 0; i < numEdge; ++i) {
 		eAttributes[i].stability = compStability(i);
 		eAttributes[i].cost = compContractionTarget(i);
 		double mc = (eAttributes[i].cost + k)*eAttributes[i].stability*eAttributes[i].stability;
 		EdgeIdCost eic(i, mc);
+		/*if (_isnan(mc))
+		{
+			std::cout << i << "   " << edges[i][0] << "    " << edges[i][1] << std::endl;
+		}*/
 		prioQue.push(eic);
 	}
+	std::cout << "Done." << std::endl;
+
 	// construct the contracting edge queue according to the statbility ratio and SQE error of each edge 
 	//InitializeEdgeQueue(k);
 
@@ -555,28 +595,28 @@ int MedialAxisTrans::Contraction(int MaximalIte, double k) {
 
 		std::vector<int> edgelist;
 		std::set<int>::iterator ite = adjFaces[v0].begin();
-		for (; ite != adjFaces[v0].end(); ite++)
+		for (; ite != adjFaces[v0].end(); ++ite)
 		{
 			connectFace2Target(*ite, v0, vid, edgelist);
 		}
 		ite = adjFaces[v1].begin();
-		for (; ite != adjFaces[v1].end(); ite++)
+		for (; ite != adjFaces[v1].end(); ++ite)
 		{
 			connectFace2Target(*ite, v1, vid, edgelist);
 		}
 		ite = adjCones[v0].begin();
-		for (; ite != adjCones[v0].end(); ite++)
+		for (; ite != adjCones[v0].end(); ++ite)
 		{
 			connectCone2Target(*ite, v0, vid, edgelist);
 		}
 		ite = adjCones[v1].begin();
-		for (; ite != adjCones[v1].end(); ite++)
+		for (; ite != adjCones[v1].end(); ++ite)
 		{
 			connectCone2Target(*ite, v1, vid, edgelist);
 		}
 
 		std::vector<int>::iterator itera = edgelist.begin();
-		for (; itera != edgelist.end(); itera++)
+		for (; itera != edgelist.end(); ++itera)
 		{
 			eAttributes[*itera].cost = compContractionTarget(*itera);
 			double mc = (eAttributes[*itera].cost + k)*eAttributes[*itera].stability*eAttributes[*itera].stability;
@@ -721,6 +761,41 @@ void MedialAxisTrans::read_ma(const char *filename, MedialAxisTrans &mesh){
 	return;
 }
 
+
+void MedialAxisTrans::produce_contracted_connectivity() {
+	std::set<face_id>::iterator ite = FacesRemained.begin();
+	int numf_c = FacesRemained.size();
+	faces_c.resize(numf_c);
+	//for (int i = 0; i < numf_c; i++)
+	//{
+	//	faces_c[i] = Face(faces[])
+	//}
+}
+
+
+void MedialAxisTrans::projection() {
+
+	glm::vec3 position = glm::vec3(0, 0, 5);/*glm::vec3(0, 0, 0) + glm::vec3(radius * cos(theta) * cos(phi),
+		radius * cos(theta) * sin(phi), radius * sin(theta));*/
+	//glm::vec3 up = glm::cross(-position, glm::vec3(-cos(phi), -sin(phi), 0));
+	glm::vec3 up = glm::vec3(0, 0, 1); //glm::vec3(-sin(theta)*cos(phi), -sin(theta)*sin(phi), cos(theta));
+	// Camera matrix
+	glm::mat4 ProjectionMatrix = glm::perspective(glm::radians(45.0f), 1024.0f/768.0f, 0.1f, 100.0f);
+
+	glm::mat4 ViewMatrix = glm::lookAt(
+		position,           // Camera is here
+		glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
+		up                  // Head is up (set to 0,-1,0 to look upside-down)
+	);
+	glm::mat4 MVP = ProjectionMatrix*ViewMatrix;
+	for (int i = 0; i < vN; i++)
+	{
+		//vv = glm::mat4(vertices[i][0], vertices[i][1], vertices[i][2]);
+
+	}
+
+}
+
 bool write(const char *filename) {
 	return true;
 }
@@ -777,22 +852,30 @@ bool getSimilarVertexIndex(
 
 
 
-void solveNormalEq(const vec &p1, const vec &p2, const double &b1,
+bool solveNormalEq(const vec &p1, const vec &p2, const double &b1,
 	const double &b2, vec &n1, vec &n2) {
+	bool isNegative = true;
 	point p = p1 CROSS p2;
 	double xb = p1[0] * b2 - p2[0] * b1, yb = p1[1] * b2 - p2[1] * b1;
 	float A = len2(p);
 	float B = 2 * (yb*p[0] - xb*p[1]);
 	float C = xb*xb + yb*yb - p[2] * p[2];
 	float delta = B*B - 4 * A*C;
-	if (delta < 0) perror("Wrong delta!\n");
-	n1[2] = (-B + sqrt(delta)) / 2 / A;
-	n1[0] = (yb + p[0] * n1[2]) / p[2];
-	n1[1] = (p[1] * n1[2] - xb) / p[2];
+	if (delta < 0) {
+		//printf("Wrong delta!\n");
+		isNegative = false;
+		//return false;
+	}
+	else {
+		n1[2] = (-B + sqrt(delta)) / 2 / A;
+		n1[0] = (yb + p[0] * n1[2]) / p[2];
+		n1[1] = (p[1] * n1[2] - xb) / p[2];
 
-	n2[2] = (-B - sqrt(delta)) / 2 / A;
-	n2[0] = (yb + p[0] * n2[2]) / p[2];
-	n2[1] = (p[1] * n2[2] - xb) / p[2];
+		n2[2] = (-B - sqrt(delta)) / 2 / A;
+		n2[0] = (yb + p[0] * n2[2]) / p[2];
+		n2[1] = (p[1] * n2[2] - xb) / p[2];
+	}
+	return isNegative;
 }
 
 void swapComponent(point &p, int i, int j) {
